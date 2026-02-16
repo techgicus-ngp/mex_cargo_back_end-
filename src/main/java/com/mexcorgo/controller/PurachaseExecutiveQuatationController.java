@@ -48,29 +48,35 @@ public class PurachaseExecutiveQuatationController {
 
     @PostMapping("/purchaseexecutive/quatation/send-to-masters")
     @PreAuthorize("hasAnyRole('Admin','Head','Purchase Executive','Planning Executive')")
-    public ResponseEntity<ApiResponse> sendQuatationToMaster(@RequestBody SendQuatationRequestToMaster sendQuatationRequestToMaster){
-        return ResponseEntity.ok(purchaseExecutiveQuatationService.sendQuatationToMaster(sendQuatationRequestToMaster));
+    public ResponseEntity<ApiResponse> sendQuatationToMaster(@RequestBody SendQuatationRequestToMaster sendQuatationRequestToMaster,Authentication authentication){
+        User currentUser = ((MyUserDetails) authentication.getPrincipal()).getUser();
+        return ResponseEntity.ok(purchaseExecutiveQuatationService.sendQuatationToMaster(sendQuatationRequestToMaster,currentUser));
     }
 
 
     @PostMapping("/purchaseexecutive/quatation/add/master-response")
     @PreAuthorize("hasAnyRole('Admin','Head','Purchase Executive','Planning Executive')")
     public ResponseEntity<MasterQuatationResponse> addMasterResponse(
-            @RequestBody MasterQuatationResponseDto dto) {
-        MasterQuatationResponse response = purchaseExecutiveQuatationService.addMasterResponse(dto);
+            @RequestBody MasterQuatationResponseDto dto,
+            Authentication authentication) {
+        User currentUser = ((MyUserDetails) authentication.getPrincipal()).getUser();
+        MasterQuatationResponse response = purchaseExecutiveQuatationService.addMasterResponse(dto,currentUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/purchaseexecutive/quatation/master/response/{masterQuatationResponseId}/update")
     @PreAuthorize("hasAnyRole('Admin','Head','Purchase Executive','Planning Executive')")
-    public MasterQuatationResponse updateMasterResponse(@PathVariable("masterQuatationResponseId") Long masterQuatationResponseId,@RequestBody MasterQuatationResponseDto dto){
-      return purchaseExecutiveQuatationService.updateMasterResponseByMasterQuatationResponseId(masterQuatationResponseId,dto);
+    public MasterQuatationResponse updateMasterResponse(@PathVariable("masterQuatationResponseId") Long masterQuatationResponseId,@RequestBody MasterQuatationResponseDto dto,Authentication authentication){
+        User currentUser = ((MyUserDetails) authentication.getPrincipal()).getUser();
+      return purchaseExecutiveQuatationService.updateMasterResponseByMasterQuatationResponseId(masterQuatationResponseId,dto,currentUser);
     }
 
     @PostMapping("/purchaseexecutive/quatation/send-to-pricing-executive")
     @PreAuthorize("hasAnyRole('Admin','Head','Purchase Executive')")
-    public ApiResponse sendQuatationWithMastersPricingResponseToPricingExcutive(@RequestBody SendQuatationToPricingExecutiveRequest sendQuatationToPricingExecutiveRequest){
-      return purchaseExecutiveQuatationService.sendQuatationWithPricingToPricingExecutive(sendQuatationToPricingExecutiveRequest);
+    public ApiResponse sendQuatationWithMastersPricingResponseToPricingExcutive(@RequestBody SendQuatationToPricingExecutiveRequest sendQuatationToPricingExecutiveRequest,
+                                                                                Authentication authentication){
+        User currentUser = ((MyUserDetails) authentication.getPrincipal()).getUser();
+      return purchaseExecutiveQuatationService.sendQuatationWithPricingToPricingExecutive(sendQuatationToPricingExecutiveRequest,currentUser);
     }
 
 

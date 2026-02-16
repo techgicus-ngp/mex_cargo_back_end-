@@ -1,60 +1,42 @@
 package com.mexcorgo.service;
 
 
-import com.mexcorgo.component.QuatationStatus;
+import com.mexcorgo.component.*;
 import com.mexcorgo.datamodel.*;
 import com.mexcorgo.dto.QuatationMasterPricingResponseSqlDto;
 import com.mexcorgo.dto.request.MasterQuatationResponseDto;
 import com.mexcorgo.dto.request.SendQuatationRequestToMaster;
 import com.mexcorgo.dto.request.SendQuatationToPricingExecutiveRequest;
 import com.mexcorgo.dto.response.*;
+import com.mexcorgo.exception.InvalidLeadStateException;
 import com.mexcorgo.exception.ResourceNotFoundException;
 import com.mexcorgo.repository.*;
+import lombok.RequiredArgsConstructor;
+import org.mapstruct.control.MappingControl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class PurchaseExecutiveQuatationService {
 
-    private QuatationRepository quatationRepository;
-
-    private LeadRepository leadRepository;
-
-    private MasterRepository masterRepository;
-
-    private SendEmailService sendEmailService;
-
-    private QuatationMasterRepository quatationMasterRepository;
-
-    private MasterQuatationResponseRepository masterQuatationResponseRepository;
-
-    private QuatationPricingExecutiveRepository quatationPricingExecutiveRepository;
-
-    private UserRepository userRepository;
-
-    private NotificationService notificationService;
-
-
-    @Autowired
-    public PurchaseExecutiveQuatationService(QuatationRepository quatationRepository, LeadRepository leadRepository, MasterRepository masterRepository, SendEmailService sendEmailService, QuatationMasterRepository quatationMasterRepository, MasterQuatationResponseRepository masterQuatationResponseRepository, QuatationPricingExecutiveRepository quatationPricingExecutiveRepository, UserRepository userRepository, NotificationService notificationService) {
-        this.quatationRepository = quatationRepository;
-        this.leadRepository = leadRepository;
-        this.masterRepository = masterRepository;
-        this.sendEmailService = sendEmailService;
-        this.quatationMasterRepository = quatationMasterRepository;
-        this.masterQuatationResponseRepository = masterQuatationResponseRepository;
-        this.quatationPricingExecutiveRepository = quatationPricingExecutiveRepository;
-        this.userRepository = userRepository;
-        this.notificationService = notificationService;
-    }
+    private final QuatationRepository quatationRepository;
+    private final LeadRepository leadRepository;
+    private final MasterRepository masterRepository;
+   // private final SendEmailService sendEmailService;
+    private final QuatationMasterRepository quatationMasterRepository;
+    private final MasterQuatationResponseRepository masterQuatationResponseRepository;
+    private final QuatationPricingExecutiveRepository quatationPricingExecutiveRepository;
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
+//    private final LeadTimelineService leadTimelineService;
+    private final LeadStateService leadStateService;
 
     public List<PurchaseQuatation> getQuatationFromSalesAndMarketing(Long purchaseExecutiveId){
 
@@ -67,7 +49,7 @@ public class PurchaseExecutiveQuatationService {
 
 
     @Transactional
-    public ApiResponse sendQuatationToMaster(SendQuatationRequestToMaster sendQuatationRequestToMaster){
+    public ApiResponse sendQuatationToMaster(SendQuatationRequestToMaster sendQuatationRequestToMaster,User currentUser){
 
         //  Fetch Lead + Need in one query using leadId
         Lead lead = leadRepository.findLeadWithNeedByLeadId(sendQuatationRequestToMaster.getLeadId())
@@ -112,9 +94,13 @@ public class PurchaseExecutiveQuatationService {
         for (Master master : masters) {
             QuatationMaster quotationMaster = new QuatationMaster();
             quotationMaster.setMaster(master);
-            quotationMaster.setQuatationForwardDate(LocalDate.now());
-            quotationMaster.setQuatationForwardTime(LocalTime.now());
+
+            ZonedDateTime istDateTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+            quotationMaster.setQuatationForwardDate(istDateTime.toLocalDate());
+            quotationMaster.setQuatationForwardTime(istDateTime.toLocalTime());
+
             quotationMaster.setQuatation(quatation);
+            quotationMaster.setSentByPurchaseExecutive(currentUser);
             quotationMasters.add(quotationMaster);
         }
         quatationMasterRepository.saveAll(quotationMasters);
@@ -129,6 +115,35 @@ public class PurchaseExecutiveQuatationService {
 //        lead.setIsQuatationCreated(true);
 //        leadRepository.save(lead);
 
+
+        String masterName = masters.stream()
+                .map(Master::getContactName)
+                        .collect(Collectors.joining(", "));
+
+        leadStateService.performAction(
+                lead,
+                LeadEvent.SENT_TO_MASTER,
+                LeadActionType.SEND_TO_MASTER,
+                "Quatation sent to master : "+masterName,
+                currentUser
+        );
+
+//        // set leas status
+//        lead.setCurrentStatus(LeadStatus.SENT_TO_MASTER);
+//        leadRepository.save(lead);
+//
+//
+//        leadTimelineService.setLeadTimeLineFieldsAndSave(
+//                lead,
+////                LeadStage.PURCHASE,
+////                LeadStage.PURCHASE,
+////                LeadStatus.SENT_TO_MASTER,
+//                "Quatation sent to master : "+masterName,
+//                currentUser,
+//                ZonedDateTime.now(ZoneId.of("Asia/Kolkata"))
+//        );
+
+
         // set quatation status to send to quataion service provider
         quatation.setQuatationStatus(QuatationStatus.SENT_TO_SERVICE_PROVIDERS);
 
@@ -142,26 +157,84 @@ public class PurchaseExecutiveQuatationService {
 
 
 
-    public MasterQuatationResponse addMasterResponse(MasterQuatationResponseDto dto){
+    @Transactional
+    public MasterQuatationResponse addMasterResponse(MasterQuatationResponseDto dto,User currentUser){
        QuatationMaster quatationMaster = quatationMasterRepository.findById(dto.getQuotationMasterId())
                .orElseThrow(()-> new ResourceNotFoundException("Quatation Master with id : "+dto.getQuotationMasterId()+" is not found"));
 
+
+          Optional<MasterQuatationResponse> masterQuatationResponse = masterQuatationResponseRepository.findByQuatationMaster(quatationMaster);
+
+          if (masterQuatationResponse.isPresent()){
+
+          MasterQuatationResponse updateMasterResponse =  updateMasterResponseByMasterQuatationResponseId(masterQuatationResponse.get().getMasterQuatationResponseId(),dto,currentUser);
+
+            return updateMasterResponse;
+          }
+
         MasterQuatationResponse response = new MasterQuatationResponse();
         response.setQuatationMaster(quatationMaster);
-        response = convertMasterResponseDtoIntoMasterQuatationResponse(response,dto);
+        response = convertMasterResponseDtoIntoMasterQuatationResponse(response,dto,currentUser);
+        response.setResponseAddedBy(currentUser);
+        response.setCreatedAt(ZonedDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+        Lead lead = quatationMaster.getQuatation().getLead();
+
+
+        leadStateService.performAction(
+                lead,
+                LeadEvent.COLLECT_RESPONSE,
+                LeadActionType.COLLECT_MASTER_RESPONSE,
+              //  " Master Quotation Response Received ",
+                "Quotation response received from master: " + quatationMaster.getMaster().getContactName(),
+                currentUser
+        );
+
+//        // set leas status
+//        lead.setCurrentStatus(LeadStatus.MASTER_RESPONSE_RECEIVED);
+//        leadRepository.save(lead);
+//
+//
+//        leadTimelineService.setLeadTimeLineFieldsAndSave(
+//                lead,
+////                LeadStage.PURCHASE,
+////                LeadStage.PURCHASE,
+////                LeadStatus.MASTER_RESPONSE_RECEIVED,
+//                " Master Quotation Response Received : ",
+//                currentUser,
+//                ZonedDateTime.now(ZoneId.of("Asia/Kolkata"))
+//        );
 
         return masterQuatationResponseRepository.save(response);
 
     }
 
 
-    public MasterQuatationResponse updateMasterResponseByMasterQuatationResponseId(Long masterQuatationResponseId,MasterQuatationResponseDto masterQuatationResponseDto){
+    public MasterQuatationResponse updateMasterResponseByMasterQuatationResponseId(Long masterQuatationResponseId,MasterQuatationResponseDto masterQuatationResponseDto,User currentUser){
        MasterQuatationResponse masterQuatationResponse = masterQuatationResponseRepository.findById(masterQuatationResponseId)
                .orElseThrow(()-> new ResourceNotFoundException("MasterQuatationResponse id : "+masterQuatationResponseId+" is not found"));
 
-       masterQuatationResponse = convertMasterResponseDtoIntoMasterQuatationResponse(masterQuatationResponse,masterQuatationResponseDto);
+       masterQuatationResponse = convertMasterResponseDtoIntoMasterQuatationResponse(masterQuatationResponse,masterQuatationResponseDto,currentUser);
 
        MasterQuatationResponse saveMasterQuatationResponse =  masterQuatationResponseRepository.save(masterQuatationResponse);
+
+   //    Lead lead = masterQuatationResponse.getQuatationMaster().getQuatation().getLead();
+
+
+//        // set leas status
+//        lead.setCurrentStatus(LeadStatus.MASTER_RESPONSE_RECEIVED);
+//        leadRepository.save(lead);
+//
+//
+//        leadTimelineService.setLeadTimeLineFieldsAndSave(
+//                lead,
+////                LeadStage.PURCHASE,
+////                LeadStage.PURCHASE,
+////                LeadStatus.MASTER_RESPONSE_RECEIVED,
+//                " Master Quotation Response Received : ",
+//                currentUser,
+//                ZonedDateTime.now(ZoneId.of("Asia/Kolkata"))
+//        );
 
        return saveMasterQuatationResponse;
     }
@@ -170,10 +243,10 @@ public class PurchaseExecutiveQuatationService {
 
 
     @Transactional
-    public ApiResponse sendQuatationWithPricingToPricingExecutive(SendQuatationToPricingExecutiveRequest sendQuatationToPricingExecutiveRequest){
+    public ApiResponse sendQuatationWithPricingToPricingExecutive(SendQuatationToPricingExecutiveRequest sendQuatationToPricingExecutiveRequest,User currentUser){
 
-        //get list of pricing executive by their Ids
-        Set<User> pricingExecutiveList = userRepository.findUsersByIds(sendQuatationToPricingExecutiveRequest.getPricingIds());
+//        //get list of pricing executive by their Ids
+//        Set<User> pricingExecutiveList = userRepository.findUsersByIds(sendQuatationToPricingExecutiveRequest.getPricingIds());
 
         // get quatation by id
         Quatation getQuatation = quatationRepository.findById(sendQuatationToPricingExecutiveRequest.getQuatationId())
@@ -183,10 +256,33 @@ public class PurchaseExecutiveQuatationService {
         List<QuatationMasterPricingResponseSqlDto> quatationMasterPricingResponseSqlDto = masterQuatationResponseRepository
                 .findQuatationAndMasterPricingByQuatationId(sendQuatationToPricingExecutiveRequest.getQuatationId());
 
+        if(quatationMasterPricingResponseSqlDto.isEmpty()){
+            throw new InvalidLeadStateException("Cannot send lead to Pricing before receiving response from Master");
+        }
 
         // Extract unique Lead & Quotation details from the first row
         QuatationMasterPricingResponseSqlDto firstEntryOfQuatation = quatationMasterPricingResponseSqlDto.get(0);
 
+        //  Fetch already assigned PRICING executive IDs for this quotation
+        Set<Long> alreadyAssignedPricingIds =
+                quatationPricingExecutiveRepository
+                        .findPricingExecutiveIdsByQuatationId(sendQuatationToPricingExecutiveRequest.getQuatationId());
+
+        // 4️⃣ FILTER incoming request IDs (skip already sent)
+        Set<Long> newPricingIds = sendQuatationToPricingExecutiveRequest.getPricingIds()
+                .stream()
+                .filter(id -> !alreadyAssignedPricingIds.contains(id))
+                .collect(Collectors.toSet());
+
+        if (newPricingIds.isEmpty()) {
+            throw new InvalidLeadStateException(
+                    "Quotation already sent to all selected Pricing Executives"
+            );
+        }
+
+        //  Fetch Users
+        Set<User> pricingExecutiveList =
+                userRepository.findUsersByIds(newPricingIds);
 
 //        // Format email content
 //        String emailContent = buildPricingQuotationEmailContent(firstEntryOfQuatation, quatationMasterPricingResponseSqlDto);
@@ -197,6 +293,10 @@ public class PurchaseExecutiveQuatationService {
                 .filter(Objects::nonNull)
                 .toList();
 
+        String pricingExcutiveNames = pricingExecutiveList.stream()
+                .map(User::getUserName)
+                .collect(Collectors.joining(", "));
+
 
         // Store Quotation-PricingExecutive Mapping & Send Email
         for (User pricingExecutive : pricingExecutiveList) {
@@ -204,8 +304,11 @@ public class PurchaseExecutiveQuatationService {
             QuatationPricingExecutive quatationPricingExecutive = new QuatationPricingExecutive();
             quatationPricingExecutive.setQuatation(getQuatation);
             quatationPricingExecutive.setPricing_executive_id(pricingExecutive);
-            quatationPricingExecutive.setQuatationForwardDate(LocalDate.now());
-            quatationPricingExecutive.setQuatationForwardTime(LocalTime.now());
+
+            ZonedDateTime istDateTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+
+            quatationPricingExecutive.setQuatationForwardDate(istDateTime.toLocalDate());
+            quatationPricingExecutive.setQuatationForwardTime(istDateTime.toLocalTime());
 
             quatationPricingExecutiveRepository.save(quatationPricingExecutive);
         }
@@ -220,6 +323,16 @@ public class PurchaseExecutiveQuatationService {
           //  sendEmailService.sendBulkEmail(recipientEmails, "New Quotation for Pricing Review", emailContent);
             notificationService.sendEmailQuatationWithMasterPricingToPricingExcutives(recipientEmails,firstEntryOfQuatation,quatationMasterPricingResponseSqlDto);
         }
+
+
+        leadStateService.performAction(
+                getQuatation.getLead(),
+                LeadEvent.SEND_TO_PRICING,
+                LeadActionType.SEND_TO_PRICING,
+                //  " Master Quotation Response Received ",
+                "Quotation send to pricing executive : "+pricingExcutiveNames,
+                currentUser
+        );
 
         // ✅ Prepare Response Data
         Map<String, Object> responseData = new HashMap<>();
@@ -285,7 +398,7 @@ public class PurchaseExecutiveQuatationService {
 
 
     private MasterQuatationResponse convertMasterResponseDtoIntoMasterQuatationResponse(
-            MasterQuatationResponse response,MasterQuatationResponseDto dto
+            MasterQuatationResponse response,MasterQuatationResponseDto dto,User currentUser
     ){
         response.setOriginalPackageCost(dto.getOriginalPackageCost());
         response.setOriginalTrsCost(dto.getOriginalTrsCost());
@@ -295,7 +408,12 @@ public class PurchaseExecutiveQuatationService {
         response.setFinalTrsCost(dto.getFinalTrsCost());
         response.setFinalCarServiceCost(dto.getFinalCarServiceCost());
         response.setFinalAdditionalServiceCost(dto.getFinalAdditionalCost());
-        response.setResponseDate(LocalDateTime.now());
+
+        ZonedDateTime istDateTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+        response.setResponseDate(istDateTime.toLocalDateTime());
+      //  response.setResponseAddedBy(currentUser);
+        response.setLastModifiedBy(currentUser);
+        response.setLastModifiedAt(ZonedDateTime.now(ZoneId.of("Asia/Kolkata")));
 
         return response;
     }

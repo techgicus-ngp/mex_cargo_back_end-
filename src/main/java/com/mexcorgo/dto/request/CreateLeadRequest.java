@@ -2,6 +2,7 @@ package com.mexcorgo.dto.request;
 
 
 import com.mexcorgo.component.*;
+import com.mexcorgo.dto.FollowUpDto.FollowUpRequest;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
@@ -93,10 +94,13 @@ public class CreateLeadRequest {
      private RiskCoverageGood riskCoverageGood;
       private OtherServices otherServices;
       private List<AdditionalNeedRequest> additionalNeedRequests;
-      private String remark;
-      private String remarkDate;
-      private String remarkTime;
-      private Integer rating;
-      private FollowUpStatus followUpStatus;
+
       private FollowUpRequest followUpRequest;
+
+//      private String remark;
+//      private String remarkDate;
+//      private String remarkTime;
+//      private Integer rating;
+//      private FollowUpStatus followUpStatus;
+//      private FollowUpRequest followUpRequest;
 }

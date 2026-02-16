@@ -1,5 +1,6 @@
 package com.mexcorgo.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.mexcorgo.component.DataReference;
 import com.mexcorgo.component.FollowUpStatus;
 import com.mexcorgo.component.ModeOfCommunication;
@@ -21,6 +22,8 @@ import java.time.LocalTime;
 @Setter
 public class LeadResponseDto {
     private Long leadId;
+    private String dataReferenceNo;
+    private String departmentName;
     private String leadReferenceNo;
     private LocalDate leadDate;
     private LocalTime leadTime;
@@ -31,4 +34,8 @@ public class LeadResponseDto {
     private Boolean isQuatationSendToUser;
     private FollowUpStatus followUpStatus;
     private Boolean isVerbalConfirmationTaskCompleted;
+    private LocalDate leadCreatedDate;
+
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime leadCreatedTime;
 }

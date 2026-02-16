@@ -1,6 +1,7 @@
 package com.mexcorgo.repository;
 
 import com.mexcorgo.datamodel.MasterQuatationResponse;
+import com.mexcorgo.datamodel.QuatationMaster;
 import com.mexcorgo.dto.QuatationMasterPricingResponseSqlDto;
 import com.mexcorgo.dto.request.MasterQuatationResponseDto;
 import com.mexcorgo.dto.response.FinalQuatationPricingWithMasterDto;
@@ -11,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MasterQuatationResponseRepository extends JpaRepository<MasterQuatationResponse,Long> {
@@ -54,4 +56,5 @@ public interface MasterQuatationResponseRepository extends JpaRepository<MasterQ
         List<QuatationMasterWithMasterResponse> findQuatationMastersWithMasterResponseByQuatationId(Long quatationId);
 
 
+        Optional<MasterQuatationResponse> findByQuatationMaster(QuatationMaster quatationMaster);
 }

@@ -1,6 +1,7 @@
 package com.mexcorgo.dto.response;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,8 +18,12 @@ public class QuatationWithPurchaseExcutiveResponse {
 
     private Long quatationId;
     private LocalDate requiredQuatationDate;
+
+    @JsonFormat(pattern = "HH:mm")
     private LocalTime requiredQuatationTime;
     private LocalDate forwardQuatationDate;
+
+    @JsonFormat(pattern = "HH:mm")
     private LocalTime forwardQuationTime;
     private String quatationReferenceNo;
 }

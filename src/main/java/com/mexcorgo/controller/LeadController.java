@@ -3,6 +3,8 @@ package com.mexcorgo.controller;
 
 import com.mexcorgo.component.FollowUpStatus;
 import com.mexcorgo.datamodel.*;
+import com.mexcorgo.dto.FollowUpDto.FollowUpBasicResponse;
+import com.mexcorgo.dto.FollowUpDto.FollowUpRequest;
 import com.mexcorgo.dto.request.*;
 import com.mexcorgo.dto.response.GetLeadFullDetails;
 import com.mexcorgo.dto.response.LeadResponseDto;
@@ -71,12 +73,18 @@ public class LeadController {
       }
 
 
-      @GetMapping("/get/lead/{leadId}/note")
-      @PreAuthorize("hasAnyRole('Admin','Head','Leader','Member')")
-      public ResponseEntity<Note> getNoteForLead(@PathVariable("leadId")Long leadId){
-         return ResponseEntity.ok(leadService.getNoteForLead(leadId));
-      }
+//      @GetMapping("/get/lead/{leadId}/note")
+//      @PreAuthorize("hasAnyRole('Admin','Head','Leader','Member')")
+//      public ResponseEntity<Note> getNoteForLead(@PathVariable("leadId")Long leadId){
+//         return ResponseEntity.ok(leadService.getNoteForLead(leadId));
+//      }
 
+
+    @GetMapping("/get/lead/{leadId}/followUp")
+    @PreAuthorize("hasAnyRole('Admin','Head','Leader','Member')")
+    public ResponseEntity<List<FollowUpBasicResponse>> getFollowUpListByLead(@PathVariable("leadId")Long leadId){
+        return ResponseEntity.ok(leadService.getLeadFollowUpList(leadId));
+    }
 
       @DeleteMapping("/delete/lead/{leadId}")
       @PreAuthorize("hasAnyRole('Admin','Head','Leader','Member')")
@@ -116,24 +124,20 @@ public class LeadController {
         return leadService.updateNeedDetails(leadId,needRequest);
     }
 
-    @PutMapping("/update/lead/{leadId}/note/details")
-    @PreAuthorize("hasAnyRole('Admin','Head','Leader','Member')")
-    public Note updateNoteDetails(@PathVariable("leadId")Long leadId, @RequestBody NoteRequest noteRequest){
-        return leadService.updateNote(leadId,noteRequest);
-    }
+//    @PutMapping("/update/lead/{leadId}/note/details")
+//    @PreAuthorize("hasAnyRole('Admin','Head','Leader','Member')")
+//    public Note updateNoteDetails(@PathVariable("leadId")Long leadId, @RequestBody NoteRequest noteRequest){
+//        return leadService.updateNote(leadId,noteRequest);
+//    }
 
 
     @PostMapping("/add/lead/{leadId}/followups")
     @PreAuthorize("hasAnyRole('Admin','Head','Leader','Member')")
-    public ResponseEntity<Note> addFollowUpToNote(
+    public ResponseEntity<FollowUpBasicResponse> addFollowUp(
             @PathVariable Long leadId,
-            @RequestBody FollowUp followUp,
-            @RequestParam("followUpStatus")FollowUpStatus followUpStatus,
-            Authentication authentication
+            @RequestBody FollowUpRequest request
             ) {
-        User currentUser = ((MyUserDetails) authentication.getPrincipal()).getUser();
-        Note updatedNote = leadService.addFollowUp(leadId, followUp,followUpStatus,currentUser);
-        return ResponseEntity.ok(updatedNote);
+       return ResponseEntity.ok(leadService.addFollowUp(leadId,request));
     }
 
     @PostMapping("/add/lead/{leadId}/extra-need-data")
@@ -174,11 +178,11 @@ public class LeadController {
     }
 
 
-    @GetMapping("/get/all/lead/according")
-    @PreAuthorize("hasAnyRole('Admin','Head','Leader','Member')")
-    public ResponseEntity<List<LeadResponseDto>> getLeadByFollowUpDate(@RequestParam String followUpDate){
-        return ResponseEntity.ok(leadService.findLeadByFollowUpDate(LocalDate.parse(followUpDate)));
-    }
+//    @GetMapping("/get/all/lead/according")
+//    @PreAuthorize("hasAnyRole('Admin','Head','Leader','Member')")
+//    public ResponseEntity<List<LeadResponseDto>> getLeadByFollowUpDate(@RequestParam String followUpDate){
+//        return ResponseEntity.ok(leadService.findLeadByFollowUpDate(LocalDate.parse(followUpDate)));
+//    }
 
 
     @GetMapping("/get/lead/{leadId}/particular-amount")

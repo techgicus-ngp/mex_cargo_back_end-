@@ -77,8 +77,10 @@ public class SalesAndMarketingQuatationController {
 
       @PostMapping("/{quatationId}/add-particular-amount")
       public QuatationParticularsAmount addQuatationParticularAmount(@PathVariable("quatationId")Long quatationId,
-                                                                     @RequestBody AddParticularsRequestDto addParticularsRequestDto){
-        return salesAndMarketingQuatationService.addParticularAmount(quatationId,addParticularsRequestDto);
+                                                                     @RequestBody AddParticularsRequestDto addParticularsRequestDto,
+                                                                     Authentication authentication){
+        User currentUser = ((MyUserDetails) authentication.getPrincipal()).getUser();
+        return salesAndMarketingQuatationService.addParticularAmount(quatationId,addParticularsRequestDto,currentUser);
       }
 
 

@@ -3,16 +3,16 @@ package com.mexcorgo.datamodel;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.mexcorgo.component.DataReference;
-import com.mexcorgo.component.ModeOfCommunication;
-import com.mexcorgo.component.WayOfLead;
+import com.mexcorgo.component.*;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @NoArgsConstructor
@@ -42,6 +42,8 @@ public class Lead {
        @Enumerated(EnumType.STRING)
        private DataReference dataReference;
 
+       private String dataReferenceNo;
+
        @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL,orphanRemoval = true)
        @JoinColumn(name = "company_id")
        @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -62,10 +64,17 @@ public class Lead {
        @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
        private Need need;
 
-       @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL,orphanRemoval = true)
-       @JoinColumn(name = "note_id")
+//       @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL,orphanRemoval = true)
+//       @JoinColumn(name = "note_id")
+//       @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+//       private Note note;
+
+       @OneToMany(mappedBy = "lead",fetch = FetchType.LAZY,cascade = CascadeType.ALL,orphanRemoval = true)
        @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-       private Note note;
+       private List<FollowUp> followUpList = new ArrayList<>();
+
+       @Enumerated(EnumType.STRING)
+       private FollowUpStatus followUpStatus;
 
        @ManyToOne(fetch = FetchType.LAZY)
        @JsonIgnore
@@ -83,5 +92,18 @@ public class Lead {
        private Boolean isQuatationSendToUser = false;
 
 
+       private LocalDate leadCreatedDate;
+       private LocalTime leadCreatedTime;
+
+       private LocalDate leadCompletedDate;
+
+//       @Enumerated(EnumType.STRING)
+//       @Column(nullable = false,length = 50)
+//       private LeadStage currentStage;
+
+
+       @Enumerated(EnumType.STRING)
+       @Column(nullable = false,length = 50)
+       private LeadStatus currentStatus;
 
 }

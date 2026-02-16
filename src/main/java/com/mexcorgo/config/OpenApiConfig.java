@@ -22,7 +22,7 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Techgicus-Ebilling-APIS")
+                        .title("MEX_CARGO-APIS")
                         .version("1.0")
                         .description("API documentation for techgicus ebilling project"))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"));

@@ -2,13 +2,15 @@ package com.mexcorgo.service;
 
 
 import com.mexcorgo.component.FollowUpStatus;
+import com.mexcorgo.component.LeadActionType;
+import com.mexcorgo.component.LeadStage;
+import com.mexcorgo.component.LeadStatus;
 import com.mexcorgo.datamodel.*;
+import com.mexcorgo.dto.FollowUpDto.FollowUpBasicResponse;
+import com.mexcorgo.dto.FollowUpDto.FollowUpRequest;
 import com.mexcorgo.dto.request.*;
 import com.mexcorgo.dto.response.*;
-import com.mexcorgo.exception.CustomException;
-import com.mexcorgo.exception.InvalidLeadStatusException;
-import com.mexcorgo.exception.ResourceNotFoundException;
-import com.mexcorgo.exception.UserNotFoundException;
+import com.mexcorgo.exception.*;
 import com.mexcorgo.mapper.*;
 import com.mexcorgo.repository.*;
 import org.slf4j.Logger;
@@ -20,12 +22,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PathVariable;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -37,7 +37,7 @@ public class LeadService {
            private CompanyRepository companyRepository;
            private CompanyEmployeeRepository companyEmployeeRepository;
            private NeedRepository needRepository;
-           private NoteRepository noteRepository;
+         //  private NoteRepository noteRepository;
            private AdditionalNeedRepository additionalNeedRepository;
            private FollowUpRepository followUpRepository;
            private NeedExtraDetailsRepository needExtraDetailsRepository;
@@ -52,24 +52,16 @@ public class LeadService {
            private EndUserDetailsRepository endUserDetailsRepository;
            private QuatationRepository quatationRepository;
            private QuatationParticularsAmountRepository quatationParticularsAmountRepository;
+           private LeadTimelineService leadTimelineService;
 
            Logger logger = LoggerFactory.getLogger(LeadService.class);
 
-
     @Autowired
-    public LeadService(LeadRepository leadRepository, CompanyRepository companyRepository, CompanyEmployeeRepository companyEmployeeRepository, NeedRepository needRepository, NoteRepository noteRepository,
-                       AdditionalNeedRepository additionalNeedRepository, FollowUpRepository followUpRepository,
-                       NeedExtraDetailsRepository needExtraDetailsRepository, CompanyResponseMapper companyResponseMapper, CompanyEmployeeResponseMapper companyEmployeeResponseMapper,
-                       NeedResponseMapper needResponseMapper,CompanyMapper companyMapper,
-                       CompanyEmployeeMapper companyEmployeeMapper,NeedMapper needMapper,NeedExtraDetailsMapper needExtraDetailsMapper,
-                       SalesAndMarketingTaskRepository salesAndMarketingTaskRepository,
-                       EndUserDetailsRepository endUserDetailsRepository,QuatationRepository quatationRepository,
-                       QuatationParticularsAmountRepository quatationParticularsAmountRepository) {
+    public LeadService(LeadRepository leadRepository, CompanyRepository companyRepository, CompanyEmployeeRepository companyEmployeeRepository, NeedRepository needRepository, AdditionalNeedRepository additionalNeedRepository, FollowUpRepository followUpRepository, NeedExtraDetailsRepository needExtraDetailsRepository, CompanyResponseMapper companyResponseMapper, CompanyEmployeeResponseMapper companyEmployeeResponseMapper, NeedResponseMapper needResponseMapper, CompanyMapper companyMapper, CompanyEmployeeMapper companyEmployeeMapper, NeedMapper needMapper, NeedExtraDetailsMapper needExtraDetailsMapper, SalesAndMarketingTaskRepository salesAndMarketingTaskRepository, EndUserDetailsRepository endUserDetailsRepository, QuatationRepository quatationRepository, QuatationParticularsAmountRepository quatationParticularsAmountRepository, LeadTimelineService leadTimelineService) {
         this.leadRepository = leadRepository;
         this.companyRepository = companyRepository;
         this.companyEmployeeRepository = companyEmployeeRepository;
         this.needRepository = needRepository;
-        this.noteRepository = noteRepository;
         this.additionalNeedRepository = additionalNeedRepository;
         this.followUpRepository = followUpRepository;
         this.needExtraDetailsRepository = needExtraDetailsRepository;
@@ -84,8 +76,8 @@ public class LeadService {
         this.endUserDetailsRepository = endUserDetailsRepository;
         this.quatationRepository = quatationRepository;
         this.quatationParticularsAmountRepository = quatationParticularsAmountRepository;
+        this.leadTimelineService = leadTimelineService;
     }
-
 
     @Transactional
     public Lead createLead(CreateLeadRequest createLeadRequest,User currentUser){
@@ -94,6 +86,12 @@ public class LeadService {
         createNewLead.setUser(currentUser);
         createNewLead.setLeadReferenceNo(generateLeadReferenceNumber(currentUser.getUserId()));
         createNewLead = convertCreatedLeadRequestIntoLeed(createLeadRequest,createNewLead);
+        createNewLead.setDataReferenceNo(generateDataReferenceNo(currentUser.getUserId()));
+
+        ZonedDateTime istDateTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+
+        createNewLead.setLeadCreatedDate(istDateTime.toLocalDate());
+        createNewLead.setLeadCreatedTime(istDateTime.toLocalTime());
 
         logger.info("lead is set with the user");
 
@@ -129,25 +127,61 @@ public class LeadService {
 
         logger.info("need is set in the lead");
 
-        Note newNote = new Note();
-        newNote = convertCreateLeadRequestIntoNote(createLeadRequest,newNote,currentUser);
+//        Note newNote = new Note();
+//        newNote = convertCreateLeadRequestIntoNote(createLeadRequest,newNote,currentUser);
 
-        createNewLead.setNote(newNote);
+        FollowUpRequest followUpRequest = createLeadRequest.getFollowUpRequest();
 
-        logger.info("note is set in the lead");
+         FollowUp followUp = new FollowUp();
+         followUp = convertFollowUpRequestIntoFollowUp(followUpRequest,currentUser,createNewLead);
+
+//        createNewLead.setNote(newNote);
+
+        List<FollowUp> followUpList = new ArrayList<>();
+        followUpList.add(followUp);
+
+        createNewLead.setFollowUpList(followUpList);
+
+        createNewLead.setFollowUpStatus(followUpRequest.getFollowUpStatus());
+
+        logger.info("followUp added in the list.");
 
         newCompany.setLead(createNewLead);
         newCompanyEmployee.setLead(createNewLead);
         newEndUserDetails.setLead(createNewLead);
         newNeed.setLead(createNewLead);
-        newNote.setLead(createNewLead);
+       // newNote.setLead(createNewLead);
+
+
+        // save lead stages and status
+       // createNewLead.setCurrentStage(LeadStage.SALES);
+        createNewLead.setCurrentStatus(LeadStatus.CREATED);
 
       Lead saveLead = leadRepository.save(createNewLead);
 
         logger.info("lead is save in the lead");
 
+        ZoneId zoneId = ZoneId.of("Asia/Kolkata");
+
+        ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId);
+
+        LeadTimeline leadTimeline = leadTimelineService.setLeadTimeLineFieldsAndSave(
+                saveLead,
+                null,
+//                LeadStage.SALES,
+//                LeadStatus.CREATED,
+//                "Lead created by Sales",
+                saveLead.getUser(),
+               zonedDateTime,
+                LeadActionType.CREATED
+        );
+
+
+
        return saveLead;
     }
+
+
 
 
     public Page<LeadResponseDto> getUserLeads(Long userId, int page, int size){
@@ -178,8 +212,12 @@ public class LeadService {
             leadResponseDto.setDataReference(lead.getDataReference());
             leadResponseDto.setIsQuatationCreated(lead.getIsQuatationCreated());
             leadResponseDto.setIsQuatationSendToUser(lead.getIsQuatationSendToUser());
-            leadResponseDto.setFollowUpStatus(lead.getfollowUpStatus());
+            leadResponseDto.setFollowUpStatus(lead.getFollowUpStatus());
             leadResponseDto.setIsVerbalConfirmationTaskCompleted(lead.getIsVerbalConfirmationTaskCompleted());
+            leadResponseDto.setDataReferenceNo(lead.getDataReferenceNo());
+            leadResponseDto.setDepartmentName(lead.getDepartmentName());
+            leadResponseDto.setLeadCreatedDate(lead.getLeadCreatedDate());
+            leadResponseDto.setLeadCreatedTime(lead.getLeadCreatedTime());
 
             // Log the ID of each lead being mapped
             logger.info("Mapped Lead ID: {}", lead.getLeadId());
@@ -205,9 +243,9 @@ public class LeadService {
         return needRepository.findByLead_LeadId(leadId);
     }
 
-    public Note getNoteForLead(Long leadId){
-        return  noteRepository.findByLead_LeadId(leadId);
-    }
+//    public Note getNoteForLead(Long leadId){
+//        return  noteRepository.findByLead_LeadId(leadId);
+//    }
 
     public Boolean deleteTheLead(Long leadId){
         Lead existingLead = leadRepository.findById(leadId)
@@ -222,12 +260,16 @@ public class LeadService {
       LeadResponseInterface leadResponseInterface = leadRepository.findByLeadId(leadId);
       LeadResponseDto leadResponseDto = new LeadResponseDto();
       leadResponseDto.setLeadId(leadResponseInterface.getLeadId());
-      leadResponseDto.setLeadReferenceNo(leadResponseDto.getLeadReferenceNo());
+      leadResponseDto.setLeadReferenceNo(leadResponseInterface.getLeadReferenceNo());
       leadResponseDto.setLeadDate(leadResponseInterface.getLeadDate());
       leadResponseDto.setLeadTime(leadResponseInterface.getLeadTime());
       leadResponseDto.setWayOfLead(leadResponseInterface.getWayOfLead());
       leadResponseDto.setModeOfCommunication(leadResponseInterface.getModeOfCommunication());
       leadResponseDto.setDataReference(leadResponseInterface.getDataReference());
+      leadResponseDto.setDataReferenceNo(leadResponseInterface.getDataReferenceNo());
+      leadResponseDto.setDepartmentName(leadResponseInterface.getDepartmentName());
+      leadResponseDto.setLeadCreatedDate(leadResponseInterface.getLeadCreatedDate());
+      leadResponseDto.setLeadCreatedTime(leadResponseInterface.getLeadCreatedTime());
       return leadResponseDto;
     }
 
@@ -256,9 +298,13 @@ public class LeadService {
                .orElseThrow(()-> new ResourceNotFoundException("Lead with id : "+leadId+" is not found"));
 
        //check lead status
-        if(lead.getNote().getFollowUpStatus() == FollowUpStatus.ONGOING){
+        if(lead.getFollowUpStatus() == FollowUpStatus.ONGOING){
             throw new InvalidLeadStatusException("Lead is still ongoing so, we can not go futher.");
         }
+
+//        if(lead.getNote().getFollowUpStatus() == FollowUpStatus.ONGOING){
+//            throw new InvalidLeadStatusException("Lead is still ongoing so, we can not go futher.");
+//        }
 
 
         Optional<NeedExtraDetails> getNeedExtraDetails = needExtraDetailsRepository.findByLeadLeadId(leadId);
@@ -369,38 +415,38 @@ public class LeadService {
     }
 
 
-    public Note updateNote(Long leadId,NoteRequest noteRequest){
-        Note existingNote = noteRepository.findByLead_LeadId(leadId);
-
-        // Update Note fields
-        existingNote.setRemark(noteRequest.getRemark());
-        existingNote.setDate(noteRequest.getDate());
-        existingNote.setTime(noteRequest.getTime());
-        existingNote.setRating(noteRequest.getRating());
-
-        // Update FollowUps
-        List<FollowUp> updatedFollowUps = noteRequest.getFollowUps().stream().map(req -> {
-            FollowUp followUp;
-            if (req.getFollowUpId() != null) {
-                // Update existing follow-up
-                followUp = followUpRepository.findById(req.getFollowUpId())
-                        .orElseThrow(() -> new RuntimeException("FollowUp not found"));
-            } else {
-                // Create new follow-up
-                followUp = new FollowUp();
-                followUp.setNote(existingNote);
-            }
-
-            followUp.setFollowUpDate(req.getFollowUpDate());
-            followUp.setFollowUpRemark(req.getFollowUpRemark());
-            return followUp;
-        }).collect(Collectors.toList());
-
-        existingNote.getFollowUps().clear();
-        existingNote.getFollowUps().addAll(updatedFollowUps);
-
-        return noteRepository.save(existingNote);
-    }
+//    public Note updateNote(Long leadId,NoteRequest noteRequest){
+//        Note existingNote = noteRepository.findByLead_LeadId(leadId);
+//
+//        // Update Note fields
+//        existingNote.setRemark(noteRequest.getRemark());
+//        existingNote.setDate(noteRequest.getDate());
+//        existingNote.setTime(noteRequest.getTime());
+//        existingNote.setRating(noteRequest.getRating());
+//
+//        // Update FollowUps
+//        List<FollowUp> updatedFollowUps = noteRequest.getFollowUps().stream().map(req -> {
+//            FollowUp followUp;
+//            if (req.getFollowUpId() != null) {
+//                // Update existing follow-up
+//                followUp = followUpRepository.findById(req.getFollowUpId())
+//                        .orElseThrow(() -> new RuntimeException("FollowUp not found"));
+//            } else {
+//                // Create new follow-up
+//                followUp = new FollowUp();
+//                followUp.setNote(existingNote);
+//            }
+//
+//            followUp.setFollowUpDate(req.getFollowUpDate());
+//            followUp.setFollowUpRemark(req.getFollowUpRemark());
+//            return followUp;
+//        }).collect(Collectors.toList());
+//
+//        existingNote.getFollowUps().clear();
+//        existingNote.getFollowUps().addAll(updatedFollowUps);
+//
+//        return noteRepository.save(existingNote);
+//    }
 
     private LeadResponseDto convertLeadIntoLeadResponseDto(Lead lead,LeadResponseDto leadResponseDto){
         leadResponseDto.setLeadId(lead.getLeadId());
@@ -413,39 +459,113 @@ public class LeadService {
         return leadResponseDto;
     }
 
+
     @Transactional
-    public Note addFollowUp(Long leadId, FollowUp followUp, FollowUpStatus followUpStatus,User currentUser) {
+    public FollowUpBasicResponse addFollowUp(Long leadId,FollowUpRequest followUpRequest){
 
-        Note note = noteRepository.findByLead_LeadId(leadId);
+        Lead lead = leadRepository.findById(leadId)
+                .orElseThrow(()-> new ResourceNotFoundException("Lead not found with id : "+leadId));
 
-        note.setFollowUpStatus(followUpStatus);
-
-        followUp.setNote(note);
-        followUp.setUser(currentUser);
-        followUpRepository.save(followUp);
-
-        note.getFollowUps().add(followUp);
-
-
-        Lead lead = leadRepository.findByNote_NoteId(note.getNoteId());
-
-        Note saveNote = noteRepository.save(note);
-
-        if (followUpStatus == FollowUpStatus.COMPLETED){
-            SalesAndMarketingTasks task1 = new SalesAndMarketingTasks("Verbal Confirmation", "Tick after verbal confirmation", lead);
-            SalesAndMarketingTasks task2 = new SalesAndMarketingTasks("Get Client Work Order", "Get work order date & time", lead);
-            SalesAndMarketingTasks task3 = new SalesAndMarketingTasks("Agreement Paper Sent", "Add agreement number and send date & time", lead);
-            task3.setAgreementNumber(""); // to be filled later
-
-            SalesAndMarketingTasks task4 = new SalesAndMarketingTasks("Agreement Confirmation", "Add confirmation mode and agreement number", lead);
-            task4.setAgreementNumber("");
-            task4.setConfirmationMode("");
-
-            salesAndMarketingTaskRepository.saveAll(List.of(task1, task2, task3, task4));
+        if (lead.getFollowUpStatus().equals(FollowUpStatus.COMPLETED)){
+            throw new LeadAlreadyCompletedException("Lead already completed, so you can not add the followUp.");
         }
 
-        return saveNote;
+        LocalDate followUpDate = followUpRequest.getFollowUpDate();
+        LocalDate nextFolloUpDate = followUpRequest.getNextFollowUpDate();
+
+        if (followUpDate.isBefore(lead.getLeadDate())){
+            throw new IllegalArgumentException("FollowUp date is cannot be earlier than the lead date." +
+                    "The lead date is "+lead.getLeadDate()+" and followUp date is : "+followUpDate);
+        }
+
+        if (followUpRequest.getFollowUpStatus().equals(FollowUpStatus.COMPLETED)){
+
+            // Check: latest follow-up logic
+            LocalDate latestFollowUpDate = followUpRepository
+                    .findMaxFollowUpDateByLead(lead);
+
+            // If latest date exists and request date is before it → invalid
+            if (latestFollowUpDate != null && followUpDate.isBefore(latestFollowUpDate)) {
+                throw new IllegalArgumentException("The most recent follow-up happened on "+
+                        latestFollowUpDate + ", but you are trying to mark the lead as completed on " +
+                        followUpDate + ", which is earlier date.");
+            }
+
+            lead.setLeadCompletedDate(followUpDate);
+
+        }
+
+        if (nextFolloUpDate !=null){
+            if (nextFolloUpDate.isBefore(followUpDate)){
+                throw new IllegalArgumentException("Next follow Up date cannot be earlier than the followUp date." +
+                        "Next followUp date : "+nextFolloUpDate+", followUp date : "+followUpDate);
+            }
+        }
+
+        lead.setFollowUpStatus(followUpRequest.getFollowUpStatus());
+
+        leadRepository.save(lead);
+
+        FollowUp  followUp = convertFollowUpRequestIntoFollowUp(followUpRequest,lead.getUser(),lead);
+
+        followUpRepository.save(followUp);
+
+        FollowUpBasicResponse followUpBasicResponse = new FollowUpBasicResponse();
+        followUpBasicResponse = convertFollowUpIntoRespose(followUp);
+
+        return followUpBasicResponse;
+
     }
+
+
+    public List<FollowUpBasicResponse> getLeadFollowUpList(Long leadId){
+        Lead lead = leadRepository.findById(leadId)
+                .orElseThrow(()-> new ResourceNotFoundException("Lead not found with id : "+leadId));
+
+        List<FollowUp> followUpList = followUpRepository.findByLead(lead);
+
+        List<FollowUpBasicResponse> followUpBasicResponseList = new ArrayList<>();
+        followUpBasicResponseList = convertFollowUpListIntoResponseList(followUpList);
+
+         followUpBasicResponseList.sort(Comparator.comparing(FollowUpBasicResponse::getFollowUpDate).reversed());
+
+         return followUpBasicResponseList;
+
+    }
+
+//    @Transactional
+//    public Note addFollowUp(Long leadId, FollowUp followUp, FollowUpStatus followUpStatus,User currentUser) {
+//
+//        Note note = noteRepository.findByLead_LeadId(leadId);
+//
+//        note.setFollowUpStatus(followUpStatus);
+//
+//        followUp.setNote(note);
+//        followUp.setUser(currentUser);
+//        followUpRepository.save(followUp);
+//
+//        note.getFollowUps().add(followUp);
+//
+//
+//        Lead lead = leadRepository.findByNote_NoteId(note.getNoteId());
+//
+//        Note saveNote = noteRepository.save(note);
+//
+//        if (followUpStatus == FollowUpStatus.COMPLETED){
+//            SalesAndMarketingTasks task1 = new SalesAndMarketingTasks("Verbal Confirmation", "Tick after verbal confirmation", lead);
+//            SalesAndMarketingTasks task2 = new SalesAndMarketingTasks("Get Client Work Order", "Get work order date & time", lead);
+//            SalesAndMarketingTasks task3 = new SalesAndMarketingTasks("Agreement Paper Sent", "Add agreement number and send date & time", lead);
+//            task3.setAgreementNumber(""); // to be filled later
+//
+//            SalesAndMarketingTasks task4 = new SalesAndMarketingTasks("Agreement Confirmation", "Add confirmation mode and agreement number", lead);
+//            task4.setAgreementNumber("");
+//            task4.setConfirmationMode("");
+//
+//            salesAndMarketingTaskRepository.saveAll(List.of(task1, task2, task3, task4));
+//        }
+//
+//        return saveNote;
+//    }
 
     public NeedExtraDetails getExtraNeedDetails(Long leadId){
       return needExtraDetailsRepository.findByLeadLeadId(leadId)
@@ -546,7 +666,7 @@ public class LeadService {
         }
 
         if (createLeadRequest.getCarReceivingDate() == null){
-            newNeed.setCarMovingDate(null);
+            newNeed.setCarReceivingDate(null);
         }
         else {
             newNeed.setCarReceivingDate(createLeadRequest.getCarReceivingDate());
@@ -616,45 +736,71 @@ public class LeadService {
     }
 
 
-    private Note convertCreateLeadRequestIntoNote(CreateLeadRequest createLeadRequest,Note newNote,User currentUser){
-        newNote.setRemark(createLeadRequest.getRemark());
-        if (createLeadRequest.getRemarkDate() == null){
-            newNote.setDate(null);
-        }else {
-            newNote.setDate(LocalDate.parse(createLeadRequest.getRemarkDate()));
-        }
+    private FollowUp convertFollowUpRequestIntoFollowUp(FollowUpRequest request,User user,Lead lead){
+        FollowUp followUp = new FollowUp();
+        followUp.setFollowUpDate(request.getFollowUpDate());
+        followUp.setFollowUpTime(request.getFollowUpTime());
+        followUp.setRating(request.getRating());
+        followUp.setOutcome(request.getOutcome());
+        followUp.setNextFollowUpDate(request.getNextFollowUpDate());
+        followUp.setNextFollowUpTime(request.getNextFollowUpTime());
+        followUp.setFollowUpStatus(request.getFollowUpStatus());
+        followUp.setRemark(request.getRemark());
+        followUp.setUser(user);
+        followUp.setLead(lead);
 
-        if (createLeadRequest.getRemarkTime() == null){
-            newNote.setTime(null);
-        }
-        else {
-            newNote.setTime(LocalTime.parse(createLeadRequest.getRemarkTime()));
-        }
-        newNote.setRating(createLeadRequest.getRating());
-        newNote.setFollowUpStatus(createLeadRequest.getFollowUpStatus());
-
-        FollowUp newFollowUp = new FollowUp();
-        if (createLeadRequest.getFollowUpRequest() !=null) {
-            newNote.setFollowUps(List.of(convertFollowUpRequestIntoFollowUp(createLeadRequest.getFollowUpRequest(), newFollowUp, currentUser, newNote)));
-        }
-
-        return newNote;
+        return followUp;
     }
 
 
-    private FollowUp convertFollowUpRequestIntoFollowUp(FollowUpRequest followUpRequest, FollowUp newFollowUp, User currentUser, Note newNote){
+    public List<FollowUpBasicResponse> convertFollowUpListIntoResponseList(List<FollowUp> followUpList){
+        List<FollowUpBasicResponse> responseList = followUpList.stream()
+                .map(this:: convertFollowUpIntoRespose)
+                .collect(Collectors.toList());
+                //.toList(); // using this we make or list mutable
 
-        if (followUpRequest.getFollowUpDate() == null) {
-            newFollowUp.setFollowUpDate(null);
-        }
-        else {
-            newFollowUp.setFollowUpDate(LocalDate.parse(followUpRequest.getFollowUpDate()));
-        }
-        newFollowUp.setFollowUpRemark(followUpRequest.getFollowUpRemark());
-        newFollowUp.setUser(currentUser);
-        newFollowUp.setNote(newNote);
-        return newFollowUp;
+        return responseList;
     }
+
+//    private Note convertCreateLeadRequestIntoNote(CreateLeadRequest createLeadRequest,Note newNote,User currentUser){
+//        newNote.setRemark(createLeadRequest.getRemark());
+//        if (createLeadRequest.getRemarkDate() == null){
+//            newNote.setDate(null);
+//        }else {
+//            newNote.setDate(LocalDate.parse(createLeadRequest.getRemarkDate()));
+//        }
+//
+//        if (createLeadRequest.getRemarkTime() == null){
+//            newNote.setTime(null);
+//        }
+//        else {
+//            newNote.setTime(LocalTime.parse(createLeadRequest.getRemarkTime()));
+//        }
+//        newNote.setRating(createLeadRequest.getRating());
+//        newNote.setFollowUpStatus(createLeadRequest.getFollowUpStatus());
+//
+//        FollowUp newFollowUp = new FollowUp();
+//        if (createLeadRequest.getFollowUpRequest() !=null) {
+//            newNote.setFollowUps(List.of(convertFollowUpRequestIntoFollowUp(createLeadRequest.getFollowUpRequest(), newFollowUp, currentUser, newNote)));
+//        }
+//
+//        return newNote;
+//    }
+
+
+//    private FollowUp convertFollowUpRequestIntoFollowUp(FollowUpRequest followUpRequest, FollowUp newFollowUp, User currentUser, Note newNote){
+//
+//        if (followUpRequest.getFollowUpDate() == null) {
+//            newFollowUp.setFollowUpDate(null);
+//        }
+//        else {
+//            newFollowUp.setFollowUpDate(LocalDate.parse(followUpRequest.getFollowUpDate()));
+//        }
+//        newFollowUp.setFollowUpRemark(followUpRequest.getFollowUpRemark());
+//        newFollowUp.setUser(currentUser);
+//        newFollowUp.setNote(newNote);
+//        return newFollowUp;
+//    }
 
     private EndUserDetails convertCreatedLeadRequestIntoEndUserDetails(CreateLeadRequest createLeadRequest,
                                             EndUserDetails endUserDetails){
@@ -715,6 +861,24 @@ public class LeadService {
         }
 
         return String.format("%02d%02d%04d", year, userId, sequenceNumber);
+    }
+
+
+    private String generateDataReferenceNo(Long userId){
+
+        // Fetch last data reference number for this user
+        String lastDataRefNo = leadRepository.findLastDataReferenceForUser(userId);
+
+        int sequenceNumber = 1; // default first entry
+
+        if (lastDataRefNo !=null){
+           // userId length may vary, so remove userId prefix
+            String lastSequenceStr = lastDataRefNo.substring(String.valueOf(userId).length());
+            sequenceNumber = Integer.parseInt(lastSequenceStr) + 1;
+        }
+
+        // userId + 4 digit sequence
+        return String.format("%d%04d", userId, sequenceNumber);
     }
 
 
@@ -787,30 +951,34 @@ public class LeadService {
         return endUserDetailsRepository.findByLeadLeadId(leadId);
     }
 
-    public List<LeadResponseDto> findLeadByFollowUpDate(LocalDate followUpDate){
-        List<Lead> leads = leadRepository.findLeadByFollowUpDate(followUpDate);
-
-        List<LeadResponseDto> leadResponseDtos = leads.stream()
-                .map(lead -> {
-                    LeadResponseDto leadResponseDto = new LeadResponseDto(
-                            lead.getLeadId(),
-                            lead.getLeadReferenceNo(),
-                            lead.getLeadDate(),
-                            lead.getLeadTime(),
-                            lead.getWayOfLead(),
-                            lead.getModeOfCommunication(),
-                            lead.getDataReference(),
-                            lead.getIsQuatationCreated(),
-                            lead.getIsQuatationSendToUser(),
-                            lead.getNote().getFollowUpStatus(),
-                            null
-                    );
-
-                    return leadResponseDto;
-                }).toList();
-
-        return leadResponseDtos;
-    }
+//    public List<LeadResponseDto> findLeadByFollowUpDate(LocalDate followUpDate){
+//        List<Lead> leads = leadRepository.findLeadByFollowUpDate(followUpDate);
+//
+//        List<LeadResponseDto> leadResponseDtos = leads.stream()
+//                .map(lead -> {
+//                    LeadResponseDto leadResponseDto = new LeadResponseDto(
+//                            lead.getLeadId(),
+//                            lead.getDataReferenceNo(),
+//                            lead.getUser().getDepartment().getDepartmentName(),
+//                            lead.getLeadReferenceNo(),
+//                            lead.getLeadDate(),
+//                            lead.getLeadTime(),
+//                            lead.getWayOfLead(),
+//                            lead.getModeOfCommunication(),
+//                            lead.getDataReference(),
+//                            lead.getIsQuatationCreated(),
+//                            lead.getIsQuatationSendToUser(),
+//                            lead.getFollowUpStatus(),
+//                            null,
+//                            lead.getLeadCreatedDate(),
+//                            lead.getLeadCreatedTime()
+//                    );
+//
+//                    return leadResponseDto;
+//                }).toList();
+//
+//        return leadResponseDtos;
+//    }
 
 
     public QuatationParticularsAmount getParticularAmount(Long leadId){
@@ -849,5 +1017,28 @@ public class LeadService {
 
     }
 
+    private FollowUpBasicResponse convertFollowUpIntoRespose(FollowUp followUp){
+        FollowUpBasicResponse followUpBasicResponse = new FollowUpBasicResponse();
+        followUpBasicResponse.setFollowUpId(followUp.getFollowUpId());
+        followUpBasicResponse.setFollowUpDate(followUp.getFollowUpDate());
+        followUpBasicResponse.setFollowUpTime(followUp.getFollowUpTime());
+        followUpBasicResponse.setRating(followUp.getRating());
+        followUpBasicResponse.setOutcome(followUp.getOutcome());
+        followUpBasicResponse.setNextFollowUpDate(followUp.getNextFollowUpDate());
+        followUpBasicResponse.setNextFollowUpTime(followUp.getNextFollowUpTime());
+        followUpBasicResponse.setFollowUpStatus(followUp.getFollowUpStatus());
+        followUpBasicResponse.setRemark(followUp.getRemark());
+
+        return followUpBasicResponse;
+
+    }
+
+
+     public Lead setLeadCurrentStageAndCurrentStatus(Lead lead,LeadStage leadStage,LeadStatus status){
+        lead.setCurrentStatus(status);
+     //   lead.setCurrentStage(leadStage);
+
+        return lead;
+     }
 
 }

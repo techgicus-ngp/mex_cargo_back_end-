@@ -1,23 +1,22 @@
 package com.mexcorgo.service;
 
 
-import com.mexcorgo.component.QuatationStatus;
+import com.mexcorgo.component.*;
 import com.mexcorgo.datamodel.*;
-import com.mexcorgo.dto.QuatationMasterPricingResponseSqlDto;
+import com.mexcorgo.event.QuotationAssignedEvent;
 import com.mexcorgo.dto.request.AddParticularsRequestDto;
 import com.mexcorgo.dto.request.AddQuatationWithPurchaseExcutive;
-import com.mexcorgo.dto.request.SendEmailToPlanningRequest;
 import com.mexcorgo.dto.response.*;
 import com.mexcorgo.exception.ResourceNotFoundException;
 import com.mexcorgo.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,15 +40,16 @@ public class SalesAndMarketingQuatationService {
            private QuatationPlanningExecutiveRepository quatationPlanningExecutiveRepository;
 
            private QuatationAccountExecutiveRepository quatationAccountExecutiveRepository;
+           private LeadTimelineService leadTimelineService;
+           private LeadService leadService;
+           private LeadStateService leadStateService;
+           private final ApplicationEventPublisher eventPublisher;
 
            Logger logger = LoggerFactory.getLogger(SalesAndMarketingQuatationService.class);
 
     @Autowired
-    public SalesAndMarketingQuatationService(LeadRepository leadRepository, QuatationRepository quatationRepository,
-                                             UserRepository userRepository, SendEmailService sendEmailService,
-                                             NotificationService notificationService,QuatationParticularsAmountRepository quatationParticularsAmountRepository,
-                                             MasterQuatationResponseRepository masterQuatationResponseRepository,QuatationPlanningExecutiveRepository quatationPlanningExecutiveRepository,
-                                             QuatationAccountExecutiveRepository quatationAccountExecutiveRepository) {
+    public SalesAndMarketingQuatationService(ApplicationEventPublisher eventPublisher, LeadRepository leadRepository, QuatationRepository quatationRepository, UserRepository userRepository, SendEmailService sendEmailService, NotificationService notificationService, QuatationParticularsAmountRepository quatationParticularsAmountRepository, MasterQuatationResponseRepository masterQuatationResponseRepository, QuatationPlanningExecutiveRepository quatationPlanningExecutiveRepository, QuatationAccountExecutiveRepository quatationAccountExecutiveRepository, LeadTimelineService leadTimelineService, LeadService leadService, LeadStateService leadStateService) {
+        this.eventPublisher = eventPublisher;
         this.leadRepository = leadRepository;
         this.quatationRepository = quatationRepository;
         this.userRepository = userRepository;
@@ -59,6 +59,9 @@ public class SalesAndMarketingQuatationService {
         this.masterQuatationResponseRepository = masterQuatationResponseRepository;
         this.quatationPlanningExecutiveRepository = quatationPlanningExecutiveRepository;
         this.quatationAccountExecutiveRepository = quatationAccountExecutiveRepository;
+        this.leadTimelineService = leadTimelineService;
+        this.leadService = leadService;
+        this.leadStateService = leadStateService;
     }
 
     @Transactional
@@ -90,13 +93,56 @@ public class SalesAndMarketingQuatationService {
 
         );
 
-
-        // ✅ Send email async
-        notificationService.sendQuotationAssignmentEmailsToPurchaseExcutive(
-                getExistingPurchaseExecutives,
-                quatation,
-                needEmailDetails
+        //  event trigger only after the quotation store in the database
+        // in the event we called notification service which help to send email to
+        // multiple user.
+        eventPublisher.publishEvent(
+                new QuotationAssignedEvent(
+                        getExistingPurchaseExecutives,
+                        quatation,
+                        needEmailDetails
+                )
         );
+
+
+//        // ✅ Send email async
+//        notificationService.sendQuotationAssignmentEmailsToPurchaseExcutive(
+//                getExistingPurchaseExecutives,
+//                quatation,
+//                needEmailDetails
+//        );
+
+        String purchaseExecutivesNames = getExistingPurchaseExecutives.stream()
+                .map(User::getUserName)
+                        .collect(Collectors.joining(", "));
+
+
+        leadStateService.performAction(
+                lead,
+                LeadEvent.SEND_TO_PURCHASE,
+                LeadActionType.SEND_TO_PURCHASE,
+                "Quotation sent to Purchase executives: " + purchaseExecutivesNames,
+                lead.getUser()
+        );
+
+//        // set lead stage and status
+//        leadService.setLeadCurrentStageAndCurrentStatus(
+//                lead,
+//                LeadStage.PURCHASE,
+//                LeadStatus.SENT_TO_PURCHASE);
+//
+//        ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(ZoneId.of("Asia/Kolkata"));
+//
+//        // set lead time line and save
+//        leadTimelineService.setLeadTimeLineFieldsAndSave(
+//                lead,
+////                 LeadStage.SALES,
+////                LeadStage.PURCHASE,
+////                LeadStatus.SENT_TO_PURCHASE,
+//                "Quatation sent to Purchase executives : "+purchaseExecutivesNames,
+//                lead.getUser(),
+//                zonedDateTime
+//        );
 
         // 5. Update lead status
         updateLeadQuotationStatus(lead);
@@ -139,7 +185,11 @@ public class SalesAndMarketingQuatationService {
 
 
     public List<SalesQuatation> getQuatationRequiredDataToSalesAndMarketingDepartment(Long userId){
-         return quatationRepository.findQuatationDataByUserId(userId);
+         List<SalesQuatation> salesQuatationList = quatationRepository.findQuatationDataByUserId(userId);
+
+         salesQuatationList.sort(Comparator.comparing(SalesQuatation::getQuatationId));
+
+         return salesQuatationList;
      }
 
 
@@ -226,7 +276,9 @@ public class SalesAndMarketingQuatationService {
 //     }
 
 
-       public QuatationParticularsAmount addParticularAmount(Long quatationId,AddParticularsRequestDto addParticularsRequestDto){
+       @Transactional
+       public QuatationParticularsAmount addParticularAmount(Long quatationId,AddParticularsRequestDto addParticularsRequestDto,
+                                                             User currentUser){
            Quatation existingQuatation = quatationRepository.findById(quatationId)
                 .orElseThrow(()-> new ResourceNotFoundException("Quatation with id : "+quatationId+" is not found"));
 
@@ -245,6 +297,15 @@ public class SalesAndMarketingQuatationService {
          existingQuatation.setIsParticularAmountAdded(true);
 
          quatationRepository.save(existingQuatation);
+
+           leadStateService.performAction(
+                   existingQuatation.getLead(),
+                   LeadEvent.PRICING_DONE,
+                   LeadActionType.QUOTATION_PRICE_FINALIZED,
+                   //  " Master Quotation Response Received ",
+                   "Quotation Pricing is finalized.",
+                   currentUser
+           );
 
         QuatationParticularsAmount saveQuatationParticularAmount = quatationParticularsAmountRepository.save(quatationParticularsAmount);
 
@@ -279,6 +340,7 @@ public class SalesAndMarketingQuatationService {
     }
 
 
+    @Transactional
     public ApiResponse sendParticularAmountToTheEndUser(Long quatationId){
 
     Quatation quatation = quatationRepository.findById(quatationId)
@@ -322,6 +384,14 @@ public class SalesAndMarketingQuatationService {
                  quatationParticularsAmount
          );
 
+        leadStateService.performAction(
+                lead,
+                LeadEvent.SEND_TO_CUSTOMER,
+                LeadActionType.SEND_TO_CUSTOMER,
+                "Quotation sent to Customer executives: "+lead.getEndUserDetails().getUserName(),
+                lead.getUser()
+        );
+
          Map<String,Object> responseData = new HashMap<>();
          responseData.put("QuationId : ",quatationId);
          responseData.put("notifiedUserEmail : ",emailReceiverInfo.getEmail());
@@ -345,8 +415,11 @@ public class SalesAndMarketingQuatationService {
          newQuatation.setQuatationReferenceNo(addQuatationWithPurchaseExcutive.getQuatationReferenceNo());
          newQuatation.setQuatationRequiredDate(addQuatationWithPurchaseExcutive.getRequiredQuatationDate());
          newQuatation.setQuatationRequiredTime(addQuatationWithPurchaseExcutive.getRequiredQuatationTime());
-         newQuatation.setQuatationForwardedDateToPurchaseExecutive(LocalDate.now());
-         newQuatation.setQuatationForwardedTimeToPurchaseExecutive(LocalTime.now());
+
+        ZonedDateTime istDateTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+
+         newQuatation.setQuatationForwardedDateToPurchaseExecutive(istDateTime.toLocalDate());
+         newQuatation.setQuatationForwardedTimeToPurchaseExecutive(istDateTime.toLocalTime());
 
          return newQuatation;
      }

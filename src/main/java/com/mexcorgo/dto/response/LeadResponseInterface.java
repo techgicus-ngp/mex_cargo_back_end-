@@ -28,7 +28,11 @@ public interface LeadResponseInterface {
     DataReference getDataReference();
     Boolean getIsQuatationCreated();
     Boolean getIsQuatationSendToUser();
-    FollowUpStatus getfollowUpStatus();
+    FollowUpStatus getFollowUpStatus();
     Boolean getIsVerbalConfirmationTaskCompleted();
+    String getDataReferenceNo();
+    String getDepartmentName();
+    LocalDate getLeadCreatedDate();
+    LocalTime getLeadCreatedTime();
 
 }

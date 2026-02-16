@@ -34,4 +34,11 @@ public class QuatationMaster {
 
     private LocalTime quatationForwardTime;
 
+    // ✅ WHO SENT THIS QUOTATION TO THIS MASTER
+    @ManyToOne
+    @JoinColumn(name = "sent_by_purchase_executive_id", nullable = false)
+    private User sentByPurchaseExecutive;
+
+
+
 }

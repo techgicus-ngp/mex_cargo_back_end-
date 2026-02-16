@@ -18,19 +18,59 @@ import java.util.Optional;
 @Repository
 public interface LeadRepository extends JpaRepository<Lead,Long> {
 
-    @Query("SELECT l.leadId AS leadId, l.leadReferenceNo AS leadReferenceNo, l.leadDate AS leadDate, " +
-            "l.leadTime AS leadTime, l.wayOfLead AS wayOfLead, l.modeOfCommunication AS modeOfCommunication, " +
-            "l.dataReference AS dataReference, "+
-            "l.isQuatationCreated AS isQuatationCreated," +
-            "l.isQuatationSendToUser As isQuatationSendToUser, n.followUpStatus AS followUpStatus,st.isCompleted AS isVerbalConfirmationTaskCompleted "+
-            "FROM Lead l JOIN l.note n LEFT JOIN SalesAndMarketingTasks st ON st.lead.leadId = l.leadId AND st.name = 'Verbal Confirmation' " +
-            "WHERE l.user.userId = :userId  ORDER BY l.leadDate DESC, l.leadId DESC")
-    Page<LeadResponseInterface> findByUser_UserIdOrderByLeadDateDesc(Long userId, Pageable pageable);
+//    @Query("SELECT l.leadId AS leadId, l.leadReferenceNo AS leadReferenceNo, l.leadDate AS leadDate, " +
+//            "l.leadTime AS leadTime, l.wayOfLead AS wayOfLead, l.modeOfCommunication AS modeOfCommunication, " +
+//            "l.dataReference AS dataReference, "+
+//            "l.isQuatationCreated AS isQuatationCreated," +
+//            "l.isQuatationSendToUser As isQuatationSendToUser, n.followUpStatus AS followUpStatus,st.isCompleted AS isVerbalConfirmationTaskCompleted, "+
+//            "l.dataReferenceNo AS dataReferenceNo,l.user.department.departmentName AS departmentName "+
+//            "FROM Lead l LEFT JOIN l.note n LEFT JOIN SalesAndMarketingTasks st ON st.lead.leadId = l.leadId AND st.name = 'Verbal Confirmation' " +
+//            "WHERE l.user.userId = :userId  ORDER BY l.leadDate DESC, l.leadId DESC")
+//    Page<LeadResponseInterface> findByUser_UserIdOrderByLeadDateDesc(Long userId, Pageable pageable);
+
+
+    @Query("""
+SELECT
+    l.leadId AS leadId,
+    l.leadReferenceNo AS leadReferenceNo,
+    l.leadDate AS leadDate,
+    l.leadTime AS leadTime,
+    l.wayOfLead AS wayOfLead,
+    l.modeOfCommunication AS modeOfCommunication,
+    l.dataReference AS dataReference,
+    l.isQuatationCreated AS isQuatationCreated,
+    l.isQuatationSendToUser AS isQuatationSendToUser,
+    l.followUpStatus AS followUpStatus,
+    st.isCompleted AS isVerbalConfirmationTaskCompleted,
+    l.dataReferenceNo AS dataReferenceNo,
+    d.departmentName AS departmentName,
+    l.leadCreatedDate AS leadCreatedDate,
+    l.leadCreatedTime AS leadCreatedTime
+FROM Lead l
+LEFT JOIN l.user u
+LEFT JOIN u.department d
+LEFT JOIN SalesAndMarketingTasks st
+    ON st.lead.leadId = l.leadId
+    AND st.name = 'Verbal Confirmation'
+WHERE l.user.userId = :userId
+ORDER BY l.leadDate DESC, l.leadId DESC
+""")
+    Page<LeadResponseInterface> findByUser_UserIdOrderByLeadDateDesc(
+            @Param("userId") Long userId,
+            Pageable pageable
+    );
+
 
 
     @Query("SELECT l.leadId AS leadId, l.leadReferenceNo AS leadReferenceNo, l.leadDate AS leadDate," +
-            "l.leadTime AS leadTime, l.wayOfLead AS wayOfLead, l.modeOfCommunication AS modeOfCommunication "+
-    "FROM Lead l WHERE l.leadId = :leadId")
+            "l.leadTime AS leadTime, l.wayOfLead AS wayOfLead, l.modeOfCommunication AS modeOfCommunication,"+
+            "l.dataReference AS dataReference, "+
+            "l.dataReferenceNo AS dataReferenceNo,d.departmentName AS departmentName,"+
+            " l.leadCreatedDate AS leadCreatedDate," +
+            "l.leadCreatedTime AS leadCreatedTime "+
+    "FROM Lead l " +
+            "LEFT JOIN l.user u " +
+            "LEFT JOIN u.department d WHERE l.leadId = :leadId")
     LeadResponseInterface findByLeadId(Long leadId);
 
 //    @Query("SELECT l.leadReferenceNo FROM Lead l WHERE l.leadReferenceNo LIKE ?1% ORDER BY l.id DESC LIMIT 1")
@@ -41,14 +81,23 @@ public interface LeadRepository extends JpaRepository<Lead,Long> {
             "ORDER BY l.leadReferenceNo DESC LIMIT 1")
     String findLastLeadReferenceForUser(@Param("userId") Long userId, @Param("year") String year);
 
+
+    @Query("""
+    SELECT l.dataReferenceNo
+    FROM Lead l
+    WHERE l.user.id = :userId
+    ORDER BY l.dataReferenceNo DESC LIMIT 1
+    """)
+    String findLastDataReferenceForUser(@Param("userId") Long userId);
+
     @EntityGraph(attributePaths = {"need"})
     Optional<Lead> findLeadWithNeedByLeadId(Long leadId);
 
-    Lead findByNote_NoteId(Long noteId);
+   // Lead findByNote_NoteId(Long noteId);
 
 
-    @Query("SELECT l FROM Lead l JOIN l.note n JOIN n.followUps f WHERE f.followUpDate = :followUpDate")
-    List<Lead> findLeadByFollowUpDate(@Param("followUpDate") LocalDate folloUpDate);
+//    @Query("SELECT l FROM Lead l JOIN l.note n JOIN n.followUps f WHERE f.followUpDate = :followUpDate")
+//    List<Lead> findLeadByFollowUpDate(@Param("followUpDate") LocalDate folloUpDate);
 
 
     @Query("SELECT l.leadReferenceNo FROM Lead l JOIN l.endUserDetails eu WHERE eu.userName = :userName")

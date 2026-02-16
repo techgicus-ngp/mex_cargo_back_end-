@@ -32,7 +32,9 @@ public class PostLeadDetailsService {
                 .orElseThrow(()-> new ResourceNotFoundException("Lead not found with id: " + leadId));
 
         //check lead status
-        FollowUpStatus leadStatus = existingLead.getNote().getFollowUpStatus();
+      //  FollowUpStatus leadStatus = existingLead.getNote().getFollowUpStatus();
+
+        FollowUpStatus leadStatus = existingLead.getFollowUpStatus();
 
         // ❗ Check lead status
         if (leadStatus != FollowUpStatus.COMPLETED) {

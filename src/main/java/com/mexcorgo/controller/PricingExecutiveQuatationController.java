@@ -1,13 +1,17 @@
 package com.mexcorgo.controller;
 
 
+import com.mexcorgo.datamodel.User;
 import com.mexcorgo.dto.request.AddQuatationAnalyzePricingDto;
 import com.mexcorgo.dto.request.FinalizeQuatationRequest;
 import com.mexcorgo.dto.response.*;
+import com.mexcorgo.security.MyUserDetails;
 import com.mexcorgo.service.PricingExecutiveQuatationService;
+import org.mapstruct.control.MappingControl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -40,8 +44,10 @@ public class PricingExecutiveQuatationController {
 
     @PostMapping("/pricingexceutive/quatation/{quatationId}/add-analyze-pricing")
     @PreAuthorize("hasAnyRole('Admin','Head','Pricing Executive')")
-    public AddQuatationAnalyzePricingResponse addQuatationAnalyzePricing(@PathVariable("quatationId")Long quatationId, @RequestBody AddQuatationAnalyzePricingDto addQuatationAnalyzePricingDto){
-      return pricingExecutiveQuatationService.addQuatationAnalyzePricing(quatationId,addQuatationAnalyzePricingDto);
+    public AddQuatationAnalyzePricingResponse addQuatationAnalyzePricing(@PathVariable("quatationId")Long quatationId, @RequestBody AddQuatationAnalyzePricingDto addQuatationAnalyzePricingDto,
+                                                                         Authentication authentication){
+        User currentUser = ((MyUserDetails) authentication.getPrincipal()).getUser();
+      return pricingExecutiveQuatationService.addQuatationAnalyzePricing(quatationId,addQuatationAnalyzePricingDto,currentUser);
     }
 
 
@@ -61,8 +67,9 @@ public class PricingExecutiveQuatationController {
 
     @PostMapping("/pricingexceutive/quatation/{quatationId}/analyze-pricing/send-to-creator")
     @PreAuthorize("hasAnyRole('Admin','Head','Pricing Executive')")
-    public ResponseEntity<ApiResponse> sendQuatationAnalyzePricingToQuatationCreator(@PathVariable("quatationId")Long quatationId){
-       return  ResponseEntity.ok(pricingExecutiveQuatationService.sendQuatationAnalyzePricingToQuatationCreator(quatationId));
+    public ResponseEntity<ApiResponse> sendQuatationAnalyzePricingToQuatationCreator(@PathVariable("quatationId")Long quatationId,Authentication authentication){
+        User currentUser = ((MyUserDetails) authentication.getPrincipal()).getUser();
+       return  ResponseEntity.ok(pricingExecutiveQuatationService.sendQuatationAnalyzePricingToQuatationCreator(quatationId,currentUser));
     }
 
 

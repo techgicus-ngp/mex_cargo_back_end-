@@ -7,11 +7,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Getter
-@Setter
-public class FollowUpRequest {
-    private String followUpDate;
-    private String followUpRemark;
-}
+//@AllArgsConstructor
+//@NoArgsConstructor
+//@Getter
+//@Setter
+//public class FollowUpRequest {
+//    private String followUpDate;
+//    private String followUpRemark;
+//}

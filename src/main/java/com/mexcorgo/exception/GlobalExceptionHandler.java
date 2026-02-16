@@ -81,6 +81,34 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
      }
 
+    @ExceptionHandler(LeadAlreadyCompletedException.class)
+    public ResponseEntity<Map<String,Object>> handleLeadAlreadyCompletedException(LeadAlreadyCompletedException exception){
+        return buildResponse(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
+    @ExceptionHandler(InvalidLeadStateException.class)
+    public ResponseEntity<Map<String,Object>> handleInvalidLeadStateException(InvalidLeadStateException exception){
+        return buildResponse(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return ResponseEntity.badRequest().body(error);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String,String>> handleBusinessRule(IllegalStateException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return ResponseEntity.badRequest().body(error);
+//        return ResponseEntity
+//                .badRequest()
+//                .body(new ApiErrorResponse(false, ex.getMessage()));
+    }
+
+
     public ResponseEntity<Map<String,Object>> buildResponse(HttpStatus httpStatus, String message){
         Map<String,Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now());

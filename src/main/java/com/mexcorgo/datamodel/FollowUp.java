@@ -26,13 +26,33 @@ public class FollowUp {
 
     private LocalDate followUpDate;
 
-    private String followUpRemark;
+    private LocalTime followUpTime;
+
+    private Integer rating;
+
+    private String outcome;
+
+    private LocalDate nextFollowUpDate;
+
+    private LocalTime nextFollowUpTime;
+
+    @Enumerated(EnumType.STRING)
+    private FollowUpStatus followUpStatus;
+
+    private String remark;
+
+//    private String followUpRemark;
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "note_id")
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "note_id")
+//    @JsonIgnore
+//    private Note note;
+
+    @ManyToOne
+    @JoinColumn(name = "lead_id")
     @JsonIgnore
-    private Note note;
+    private Lead lead;
 
     @ManyToOne
     @JsonIgnore

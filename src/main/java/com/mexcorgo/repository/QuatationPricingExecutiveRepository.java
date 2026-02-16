@@ -2,13 +2,13 @@ package com.mexcorgo.repository;
 
 import com.mexcorgo.datamodel.QuatationPricingExecutive;
 import com.mexcorgo.dto.response.PricingQuatation;
-import com.mexcorgo.dto.response.SalesQuatation;
 import com.mexcorgo.dto.response.SendQuatationPricingEmpResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public interface QuatationPricingExecutiveRepository extends JpaRepository<QuatationPricingExecutive,Long> {
@@ -36,5 +36,18 @@ public interface QuatationPricingExecutiveRepository extends JpaRepository<Quata
             " WHERE qpe.quatation.quatationId = :quatationId")
     List<SendQuatationPricingEmpResponse> findPrincingEmpResponseByQuatationId(Long quatationId);
 
+
+//    boolean existsByQuatation_QuatationIdAndPricing_executive_id_UserId(
+//            Long quatationId,
+//            Long pricingExecutiveId
+//    );
+
+
+    @Query("""
+        SELECT qpe.pricing_executive_id.userId
+        FROM QuatationPricingExecutive qpe
+        WHERE qpe.quatation.quatationId = :quatationId
+    """)
+    Set<Long> findPricingExecutiveIdsByQuatationId(Long quatationId);
 
 }

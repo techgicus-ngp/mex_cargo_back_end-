@@ -1,24 +1,22 @@
 package com.mexcorgo.service;
 
 
+import com.mexcorgo.component.LeadActionType;
+import com.mexcorgo.component.LeadEvent;
 import com.mexcorgo.component.QuatationStatus;
 import com.mexcorgo.datamodel.*;
 import com.mexcorgo.dto.request.AddQuatationAnalyzePricingDto;
-import com.mexcorgo.dto.request.FinalizeQuatationRequest;
 import com.mexcorgo.dto.response.*;
 import com.mexcorgo.exception.ResourceNotFoundException;
 import com.mexcorgo.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PathVariable;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class PricingExecutiveQuatationService {
@@ -38,9 +36,11 @@ public class PricingExecutiveQuatationService {
        private MasterQuatationResponseRepository masterQuatationResponseRepository;
 
        private NotificationService notificationService;
+       private LeadStateService leadStateService;
+
 
     @Autowired
-    public PricingExecutiveQuatationService(QuatationRepository quatationRepository, LeadRepository leadRepository, SendEmailService sendEmailService, QuatationMasterRepository quatationMasterRepository, MasterRepository masterRepository, QuatationPricingExecutiveRepository quatationPricingExecutiveRepository, MasterQuatationResponseRepository masterQuatationResponseRepository, NotificationService notificationService) {
+    public PricingExecutiveQuatationService(QuatationRepository quatationRepository, LeadRepository leadRepository, SendEmailService sendEmailService, QuatationMasterRepository quatationMasterRepository, MasterRepository masterRepository, QuatationPricingExecutiveRepository quatationPricingExecutiveRepository, MasterQuatationResponseRepository masterQuatationResponseRepository, NotificationService notificationService, LeadStateService leadStateService) {
         this.quatationRepository = quatationRepository;
         this.leadRepository = leadRepository;
         this.sendEmailService = sendEmailService;
@@ -49,6 +49,7 @@ public class PricingExecutiveQuatationService {
         this.quatationPricingExecutiveRepository = quatationPricingExecutiveRepository;
         this.masterQuatationResponseRepository = masterQuatationResponseRepository;
         this.notificationService = notificationService;
+        this.leadStateService = leadStateService;
     }
 
     public List<PricingQuatation> getQuatationByPricingExecutiveId(Long pricingExecutiveId){
@@ -115,7 +116,7 @@ public class PricingExecutiveQuatationService {
       return masterQuatationResponseRepository.findQuatationMastersWithMasterResponseByQuatationId(quatationId);
     }
 
-    public AddQuatationAnalyzePricingResponse addQuatationAnalyzePricing(Long quatationId, AddQuatationAnalyzePricingDto addQuatationAnalyzePricingDto){
+    public AddQuatationAnalyzePricingResponse addQuatationAnalyzePricing(Long quatationId, AddQuatationAnalyzePricingDto addQuatationAnalyzePricingDto,User currentUser){
         Quatation quatation = quatationRepository.findById(quatationId)
                 .orElseThrow(()-> new ResourceNotFoundException("Quatation with id : "+quatationId+" is not found"));
 
@@ -125,6 +126,14 @@ public class PricingExecutiveQuatationService {
         quatation.setAnalyzeAdditionalServiceCost(addQuatationAnalyzePricingDto.getAnalyzeAdditionalServiceCost());
 
        Quatation saveQuatation =  quatationRepository.save(quatation);
+
+       leadStateService.performAction(
+               saveQuatation.getLead(),
+               LeadEvent.ANALYZED_PRICING,
+               LeadActionType.ANALYZED_PRICING,
+               "Quotation pricing is analyzed",
+               currentUser
+       );
 
        AddQuatationAnalyzePricingResponse addQuatationAnalyzePricingResponse = new AddQuatationAnalyzePricingResponse();
        addQuatationAnalyzePricingResponse.setQuatationId(saveQuatation.getQuatationId());
@@ -160,7 +169,8 @@ public class PricingExecutiveQuatationService {
     }
 
 
-    public ApiResponse sendQuatationAnalyzePricingToQuatationCreator(Long quatationId){
+    @Transactional
+    public ApiResponse sendQuatationAnalyzePricingToQuatationCreator(Long quatationId,User currentUser){
         Quatation quatation = quatationRepository.findById(quatationId)
                 .orElseThrow(()-> new ResourceNotFoundException("Quatation with id : "+quatationId+" is not found"));
 
@@ -191,11 +201,21 @@ public class PricingExecutiveQuatationService {
                 lead.getUser().getEmail()
         );
 
+        ZonedDateTime istDateTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+
         // set quatation receive pricing date and time
-        quatation.setQuatationReceivedPricingDate(LocalDate.now());
-        quatation.setQuatationReceivedPricingTime(LocalTime.now());
+        quatation.setQuatationReceivedPricingDate(istDateTime.toLocalDate());
+        quatation.setQuatationReceivedPricingTime(istDateTime.toLocalTime());
         quatation.setQuatationStatus(QuatationStatus.PRICING_FINALIZED_AND_SENT_TO_SALES);
         quatationRepository.save(quatation);
+
+        leadStateService.performAction(
+                quatation.getLead(),
+                LeadEvent.SEND_TO_LEAD_CREATOR,
+                LeadActionType.SEND_TO_LEAD_CREATOR,
+                "Quotation send to lead creator : "+quatation.getLead().getUser().getUserName(),
+                currentUser
+        );
 
         // ✅ Prepare Response Data
         Map<String, Object> responseData = new HashMap<>();
