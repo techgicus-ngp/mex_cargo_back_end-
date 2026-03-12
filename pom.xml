@@ -157,11 +157,10 @@
 							<artifactId>lombok</artifactId>
 <!--							<version>1.18.30</version>-->
 						</exclude>
+						<exclude>
 						<groupId>org.mapstruct</groupId>
 						<artifactId>mapstruct-processor</artifactId>
 <!--						<version>${org.mapstruct.version}</version>-->
-						<exclude>
-
 						</exclude>
 					</excludes>
 				</configuration>
