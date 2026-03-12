@@ -21,7 +21,8 @@ public interface MasterQuatationResponseRepository extends JpaRepository<MasterQ
                 "mqr.masterQuatationResponseId," +
                 "mqr.originalPackageCost,mqr.originalTrsCost,mqr.originalCarServiceCost," +
                 "mqr.originalAdditionalServiceCost,mqr.finalPackageCost,mqr.finalTrsCost," +
-                "mqr.finalCarServiceCost,mqr.finalAdditionalServiceCost,mqr.responseDate )" +
+                "mqr.finalCarServiceCost,mqr.finalAdditionalServiceCost,mqr.responseDate ," +
+                "mqr.lastModifiedAt,mqr.createdAt)" +
                 "FROM MasterQuatationResponse mqr WHERE " +
                 "mqr.quatationMaster.quatationMasterId =:quatationMasterId")
         MasterQuatationResponse findMasterQuatationResponseByQuatationMasterId(Long quatationMasterId);

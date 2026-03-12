@@ -56,6 +56,7 @@ public class MasterController {
 
 
     @GetMapping("/get/quatationMasterId/{quatationMasterId}/response")
+    @PreAuthorize("hasAnyRole('Admin','Purchase Executive')")
     public MasterQuatationResponse getMasterResponse(@PathVariable("quatationMasterId")Long quatationMasterId){
         return masterService.getMasterResponse(quatationMasterId);
     }

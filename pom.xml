@@ -155,11 +155,11 @@
 						<exclude>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
-							<version>1.18.30</version>
+<!--							<version>1.18.30</version>-->
 						</exclude>
 						<groupId>org.mapstruct</groupId>
 						<artifactId>mapstruct-processor</artifactId>
-						<version>${org.mapstruct.version}</version>
+<!--						<version>${org.mapstruct.version}</version>-->
 						<exclude>
 
 						</exclude>

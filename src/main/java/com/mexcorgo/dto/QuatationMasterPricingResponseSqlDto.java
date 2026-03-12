@@ -54,4 +54,43 @@ public class QuatationMasterPricingResponseSqlDto {
     private Double finalCarServiceCost;
     private Double finalAdditionalCost;
 
+
+//    public QuatationMasterPricingResponseSqlDto(Long leadId, String leadReferenceNo, String source, String destination, Commodity commodity, String size, String weight, String typeOfTransporatation, Long quatationId, LocalDateTime movingDateAndTime, OtherServices otherServices, String carTransport, LocalDate carMovingDate, LocalTime carMovingTime, LocalDate quatationRequiredDate, LocalTime quatationRequiredTime, String quatationReferenceNo, Long masterId, String associateCode, String serviceSector, String companyName, String contactName, String contactNumber, String emailId, Integer grade, String location, String hub, String state, Double originalPackageCost, Double originalTrsCost, Double originalCarServiceCost, Double originalAdditionalCost, Double finalPackageCost, Double finalTrsCost, Double finalCarServiceCost, Double finalAdditionalCost) {
+//        this.leadId = leadId;
+//        this.leadReferenceNo = leadReferenceNo;
+//        this.source = source;
+//        this.destination = destination;
+//        this.commodity = commodity;
+//        this.size = size;
+//        this.weight = weight;
+//        this.typeOfTransporatation = typeOfTransporatation;
+//        this.quatationId = quatationId;
+//        this.movingDateAndTime = movingDateAndTime;
+//        this.otherServices = otherServices;
+//        this.carTransport = carTransport;
+//        this.carMovingDate = carMovingDate;
+//        this.carMovingTime = carMovingTime;
+//        this.quatationRequiredDate = quatationRequiredDate;
+//        this.quatationRequiredTime = quatationRequiredTime;
+//        this.quatationReferenceNo = quatationReferenceNo;
+//        this.masterId = masterId;
+//        this.associateCode = associateCode;
+//        this.serviceSector = serviceSector;
+//        this.companyName = companyName;
+//        this.contactName = contactName;
+//        this.contactNumber = contactNumber;
+//        this.emailId = emailId;
+//        this.grade = grade;
+//        this.location = location;
+//        this.hub = hub;
+//        this.state = state;
+//        this.originalPackageCost = originalPackageCost;
+//        this.originalTrsCost = originalTrsCost;
+//        this.originalCarServiceCost = originalCarServiceCost;
+//        this.originalAdditionalCost = originalAdditionalCost;
+//        this.finalPackageCost = finalPackageCost;
+//        this.finalTrsCost = finalTrsCost;
+//        this.finalCarServiceCost = finalCarServiceCost;
+//        this.finalAdditionalCost = finalAdditionalCost;
+//    }
 }

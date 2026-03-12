@@ -63,7 +63,11 @@ public class MasterQuatationResponse {
 
     private ZonedDateTime createdAt;
 
-    public MasterQuatationResponse(Long masterQuatationResponseId, Double originalPackageCost, Double originalTrsCost, Double originalCarServiceCost, Double originalAdditionalServiceCost, Double finalPackageCost, Double finalTrsCost, Double finalCarServiceCost, Double finalAdditionalServiceCost, LocalDateTime responseDate) {
+    public MasterQuatationResponse(Long masterQuatationResponseId, Double originalPackageCost, Double originalTrsCost,
+                                   Double originalCarServiceCost, Double originalAdditionalServiceCost,
+                                   Double finalPackageCost, Double finalTrsCost, Double finalCarServiceCost,
+                                   Double finalAdditionalServiceCost, LocalDateTime responseDate,
+                                   ZonedDateTime lastModifiedAt,ZonedDateTime createdAt) {
         this.masterQuatationResponseId = masterQuatationResponseId;
         this.originalPackageCost = originalPackageCost;
         this.originalTrsCost = originalTrsCost;
@@ -74,5 +78,8 @@ public class MasterQuatationResponse {
         this.finalCarServiceCost = finalCarServiceCost;
         this.finalAdditionalServiceCost = finalAdditionalServiceCost;
         this.responseDate = responseDate;
+        this.lastModifiedAt = lastModifiedAt;
+        this.createdAt = createdAt;
     }
+
 }
