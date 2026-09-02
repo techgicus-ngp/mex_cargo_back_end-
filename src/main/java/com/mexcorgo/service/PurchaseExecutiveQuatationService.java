@@ -75,7 +75,7 @@ public class PurchaseExecutiveQuatationService {
                   need.getCommodity(),
                   need.getSize(),
                   need.getWeight(),
-                  need.getTypeOfTransporatation(),
+                  need.getTypeOfTransportation(),
                   need.getMovingDateAndTime(),
                   need.getOtherServices(),
                   need.getCarTransport(),

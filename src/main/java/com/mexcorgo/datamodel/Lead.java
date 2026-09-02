@@ -19,6 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 @Setter
 @Getter
+@Builder
 @Entity
 @Table(name = "leads", indexes = {
         @Index(name = "idx_user_id_date", columnList = "user_user_id, leadDate")
@@ -43,6 +44,7 @@ public class Lead {
        private DataReference dataReference;
 
        private String dataReferenceNo;
+
 
        @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL,orphanRemoval = true)
        @JoinColumn(name = "company_id")
@@ -69,6 +71,7 @@ public class Lead {
 //       @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 //       private Note note;
 
+       @Builder.Default
        @OneToMany(mappedBy = "lead",fetch = FetchType.LAZY,cascade = CascadeType.ALL,orphanRemoval = true)
        @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
        private List<FollowUp> followUpList = new ArrayList<>();
@@ -105,5 +108,19 @@ public class Lead {
        @Enumerated(EnumType.STRING)
        @Column(nullable = false,length = 50)
        private LeadStatus currentStatus;
+
+       private String sector;
+
+       private String subSector;
+
+       @PrePersist
+       public void setDefaults() {
+              if (isQuatationCreated == null) {
+                     isQuatationCreated = false;
+              }
+              if (isQuatationSendToUser == null) {
+                     isQuatationSendToUser = false;
+              }
+       }
 
 }

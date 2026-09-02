@@ -17,7 +17,7 @@ public interface QuatationRepository extends JpaRepository<Quatation,Long> {
 
     @Query("SELECT new com.mexcorgo.dto.response.SalesQuatation( " +
             "l.leadId, l.leadReferenceNo, n.source, n.destination, " +  // Fixed field names
-            "q.quatationId,n.commodity,n.size,n.weight,n.typeOfTransporatation ,n.movingDateAndTime,q.quatationRequiredDate, q.quatationRequiredTime," +
+            "q.quatationId,n.commodity,n.size,n.weight,n.typeOfTransportation ,n.movingDateAndTime,q.quatationRequiredDate, q.quatationRequiredTime," +
             "q.quatationForwardedDateToPurchaseExecutive AS forwardQuatationDate," +
             " q.quatationForwardedTimeToPurchaseExecutive AS forwardQuationTime, q.quatationReferenceNo," +
             "n.otherServices,n.carTransport,n.carMovingDate,n.carMovingTime,q.quatationStatus,q.isParticularAmountAdded) " +
@@ -38,7 +38,7 @@ public interface QuatationRepository extends JpaRepository<Quatation,Long> {
 
     @Query("SELECT new com.mexcorgo.dto.response.PurchaseQuatation( " +
             "l.leadId, l.leadReferenceNo, n.source, n.destination, " +  // Fixed field names
-            "q.quatationId,n.commodity,n.size,n.weight,n.typeOfTransporatation , n.movingDateAndTime,q.quatationRequiredDate, q.quatationRequiredTime, " +
+            "q.quatationId,n.commodity,n.size,n.weight,n.typeOfTransportation , n.movingDateAndTime,q.quatationRequiredDate, q.quatationRequiredTime, " +
             "q.quatationForwardedDateToPurchaseExecutive AS receivingQuatationDate, " +
             "q.quatationForwardedTimeToPurchaseExecutive AS receivingQuationTime, q.quatationReferenceNo," +
             "n.otherServices,n.carTransport,n.carMovingDate,n.carMovingTime,q.quatationStatus) " +
@@ -54,7 +54,7 @@ public interface QuatationRepository extends JpaRepository<Quatation,Long> {
 
     @Query("SELECT new com.mexcorgo.dto.response.PurchaseQuatation( " +
             "l.leadId, l.leadReferenceNo, n.source, n.destination, " +  // Fixed field names
-            "q.quatationId,n.commodity,n.size,n.weight,n.typeOfTransporatation , n.movingDateAndTime,q.quatationRequiredDate, q.quatationRequiredTime, " +
+            "q.quatationId,n.commodity,n.size,n.weight,n.typeOfTransportation , n.movingDateAndTime,q.quatationRequiredDate, q.quatationRequiredTime, " +
             "q.quatationForwardedDateToPurchaseExecutive AS receivingQuatationDate, " +
             "q.quatationForwardedTimeToPurchaseExecutive AS receivingQuationTime, q.quatationReferenceNo," +
             "n.otherServices,n.carTransport,n.carMovingDate,n.carMovingTime,q.quatationStatus) " +
@@ -75,7 +75,7 @@ public interface QuatationRepository extends JpaRepository<Quatation,Long> {
 
     @Query("SELECT new com.mexcorgo.dto.response.SalesQuatation(" +
             "l.leadId, l.leadReferenceNo, n.source, n.destination, " +  // Fixed field names
-            "q.quatationId,n.commodity,n.size,n.weight,n.typeOfTransporatation, n.movingDateAndTime,q.quatationRequiredDate, q.quatationRequiredTime, " +
+            "q.quatationId,n.commodity,n.size,n.weight,n.typeOfTransportation, n.movingDateAndTime,q.quatationRequiredDate, q.quatationRequiredTime, " +
             "q.quatationForwardedDateToPurchaseExecutive AS forwardQuatationDate," +
             " q.quatationForwardedTimeToPurchaseExecutive AS forwardQuationTime, q.quatationReferenceNo," +
             "n.otherServices,n.carTransport,n.carMovingDate,n.carMovingTime,q.quatationStatus,q.isParticularAmountAdded) " +

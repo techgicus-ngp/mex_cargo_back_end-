@@ -24,7 +24,7 @@ public class QuatationMasterPricingResponseSqlDto {
     private Commodity commodity;
     private String size;
     private String weight;
-    private String typeOfTransporatation;
+    private String typeOfTransportation;
     private Long quatationId;
     private LocalDateTime movingDateAndTime;
     private OtherServices otherServices;

@@ -1,13 +1,15 @@
 package com.mexcorgo.controller;
 
 
+import com.mexcorgo.dto.FollowUpDto.FollowUpBasicResponse;
+import com.mexcorgo.dto.FollowUpDto.FollowUpRequest;
 import com.mexcorgo.dto.FollowUpDto.FollowUpSummaryResponse;
-import com.mexcorgo.service.FollowUpService;
+
+import com.mexcorgo.service.lead.followUp.FollowUpService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -19,6 +21,21 @@ public class FollowUpController {
     @Autowired
     public FollowUpController(FollowUpService followUpService) {
         this.followUpService = followUpService;
+    }
+
+    @PostMapping("/add/lead/{leadId}/followups")
+    @PreAuthorize("hasAnyRole('Admin','Head','Leader','Member')")
+    public ResponseEntity<FollowUpBasicResponse> addFollowUp(
+            @PathVariable Long leadId,
+            @RequestBody FollowUpRequest request
+    ) {
+        return ResponseEntity.ok(followUpService.addFollowUp(leadId,request));
+    }
+
+    @GetMapping("/get/lead/{leadId}/followUp")
+    @PreAuthorize("hasAnyRole('Admin','Head','Leader','Member')")
+    public ResponseEntity<List<FollowUpBasicResponse>> getFollowUpListByLead(@PathVariable("leadId")Long leadId){
+        return ResponseEntity.ok(followUpService.getLeadFollowUpList(leadId));
     }
 
 

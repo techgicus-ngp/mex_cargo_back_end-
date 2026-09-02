@@ -184,7 +184,7 @@ public class PricingExecutiveQuatationService {
                 need.getCommodity(),
                 need.getSize(),
                 need.getWeight(),
-                need.getTypeOfTransporatation(),
+                need.getTypeOfTransportation(),
                 need.getMovingDateAndTime(),
                 need.getOtherServices(),
                 need.getCarTransport(),

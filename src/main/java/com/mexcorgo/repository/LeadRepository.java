@@ -1,6 +1,7 @@
 package com.mexcorgo.repository;
 
 import com.mexcorgo.datamodel.Lead;
+import com.mexcorgo.dto.response.LeadResponseDto;
 import com.mexcorgo.dto.response.LeadResponseInterface;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,8 +31,10 @@ public interface LeadRepository extends JpaRepository<Lead,Long> {
 
 
     @Query("""
-SELECT
+SELECT new com.mexcorgo.dto.response.LeadResponseDto(
     l.leadId AS leadId,
+    l.dataReferenceNo AS dataReferenceNo,
+    d.departmentName AS departmentName,
     l.leadReferenceNo AS leadReferenceNo,
     l.leadDate AS leadDate,
     l.leadTime AS leadTime,
@@ -42,10 +45,11 @@ SELECT
     l.isQuatationSendToUser AS isQuatationSendToUser,
     l.followUpStatus AS followUpStatus,
     st.isCompleted AS isVerbalConfirmationTaskCompleted,
-    l.dataReferenceNo AS dataReferenceNo,
-    d.departmentName AS departmentName,
     l.leadCreatedDate AS leadCreatedDate,
-    l.leadCreatedTime AS leadCreatedTime
+    l.leadCreatedTime AS leadCreatedTime,
+    l.sector,
+    l.subSector
+)    
 FROM Lead l
 LEFT JOIN l.user u
 LEFT JOIN u.department d
@@ -55,23 +59,34 @@ LEFT JOIN SalesAndMarketingTasks st
 WHERE l.user.userId = :userId
 ORDER BY l.leadDate DESC, l.leadId DESC
 """)
-    Page<LeadResponseInterface> findByUser_UserIdOrderByLeadDateDesc(
+    Page<LeadResponseDto> findByUser_UserIdOrderByLeadDateDesc(
             @Param("userId") Long userId,
             Pageable pageable
     );
 
 
 
-    @Query("SELECT l.leadId AS leadId, l.leadReferenceNo AS leadReferenceNo, l.leadDate AS leadDate," +
+    @Query("SELECT new com.mexcorgo.dto.response.LeadResponseDto(" +
+            "l.leadId AS leadId," +
+            "l.dataReferenceNo AS dataReferenceNo,d.departmentName AS departmentName,"+
+            " l.leadReferenceNo AS leadReferenceNo, l.leadDate AS leadDate," +
             "l.leadTime AS leadTime, l.wayOfLead AS wayOfLead, l.modeOfCommunication AS modeOfCommunication,"+
             "l.dataReference AS dataReference, "+
-            "l.dataReferenceNo AS dataReferenceNo,d.departmentName AS departmentName,"+
+            " l.isQuatationCreated AS isQuatationCreated," +
+            "l.isQuatationSendToUser AS isQuatationSendToUser," +
+            "l.followUpStatus AS followUpStatus," +
+            "st.isCompleted AS isVerbalConfirmationTaskCompleted,"+
             " l.leadCreatedDate AS leadCreatedDate," +
-            "l.leadCreatedTime AS leadCreatedTime "+
+            "l.leadCreatedTime AS leadCreatedTime,l.sector," +
+            " l.subSector )"+
     "FROM Lead l " +
             "LEFT JOIN l.user u " +
-            "LEFT JOIN u.department d WHERE l.leadId = :leadId")
-    LeadResponseInterface findByLeadId(Long leadId);
+            "LEFT JOIN u.department d " +
+            "LEFT JOIN SalesAndMarketingTasks st " +
+            "ON st.lead.leadId = l.leadId " +
+            "AND st.name = 'Verbal Confirmation'"+
+            "WHERE l.leadId = :leadId")
+    LeadResponseDto findByLeadId(Long leadId);
 
 //    @Query("SELECT l.leadReferenceNo FROM Lead l WHERE l.leadReferenceNo LIKE ?1% ORDER BY l.id DESC LIMIT 1")
 //    String findLastLeadReference(String yearPrefix);

@@ -21,7 +21,7 @@ public interface QuatationProjectExecutiveRepository extends JpaRepository<Quata
 
     @Query("SELECT new com.mexcorgo.dto.response.ProjectQuatation(" +
             "qpe.quatationProjectExecutiveId,l.leadId, l.leadReferenceNo, n.source, n.destination,"+
-            "q.quatationId,n.commodity,n.size,n.weight,n.typeOfTransporatation , n.movingDateAndTime," +
+            "q.quatationId,n.commodity,n.size,n.weight,n.typeOfTransportation , n.movingDateAndTime," +
             "q.quatationRequiredDate, q.quatationRequiredTime," +
             "qpe.quatationForwardDate AS receivingQuatationDate," +
             "qpe.quatationForwardTime AS receivingQuationTime, q.quatationReferenceNo," +

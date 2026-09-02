@@ -2,17 +2,16 @@ package com.mexcorgo.datamodel;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.mexcorgo.component.ModeOfCommunication;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Entity
 public class CompanyEmployee {
 
@@ -20,11 +19,15 @@ public class CompanyEmployee {
      @GeneratedValue(strategy = GenerationType.IDENTITY)
      private Long companyEmployeeId;
      private String employeeName;
+     private String division;
      private String department;
      private String designation;
      private String contactNo;
      private String landLineNo;
      private String mailId;
+     private ModeOfCommunication modeOfContact;
+     private boolean inBound;
+     private boolean outBound;
 
      @OneToOne(fetch = FetchType.LAZY)
      @JsonIgnore

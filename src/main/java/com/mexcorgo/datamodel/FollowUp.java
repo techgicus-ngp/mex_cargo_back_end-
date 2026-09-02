@@ -4,10 +4,7 @@ package com.mexcorgo.datamodel;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mexcorgo.component.FollowUpStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -17,6 +14,7 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @Getter
 @Setter
+@Builder
 @Entity
 public class FollowUp {
 

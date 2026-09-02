@@ -9,6 +9,7 @@ import com.mexcorgo.dto.request.AddQuatationWithPurchaseExcutive;
 import com.mexcorgo.dto.response.*;
 import com.mexcorgo.exception.ResourceNotFoundException;
 import com.mexcorgo.repository.*;
+import com.mexcorgo.service.lead.LeadService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,7 +85,7 @@ public class SalesAndMarketingQuatationService {
                 need.getCommodity(),
                 need.getSize(),
                 need.getWeight(),
-                need.getTypeOfTransporatation(),
+                need.getTypeOfTransportation(),
                 need.getMovingDateAndTime(),
                 need.getOtherServices(),
                 need.getCarTransport(),
@@ -354,7 +355,7 @@ public class SalesAndMarketingQuatationService {
 
          //to avoid lazy intialization error we created new transfer object
          EmailReceiverInfo emailReceiverInfo = new EmailReceiverInfo(
-               endUserDetails.getMailId(), endUserDetails.getUserName());
+               endUserDetails.getEndUserMailId(), endUserDetails.getUserName());
 
          // get need details from quatation
          Need need = quatation.getLead().getNeed();
@@ -364,7 +365,7 @@ public class SalesAndMarketingQuatationService {
                  need.getCommodity(),
                  need.getSize(),
                  need.getWeight(),
-                 need.getTypeOfTransporatation(),
+                 need.getTypeOfTransportation(),
                  need.getMovingDateAndTime(),
                  need.getOtherServices(),
                  need.getCarTransport(),

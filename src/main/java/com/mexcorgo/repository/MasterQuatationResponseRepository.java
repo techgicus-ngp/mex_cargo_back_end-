@@ -31,7 +31,7 @@ public interface MasterQuatationResponseRepository extends JpaRepository<MasterQ
 
         @Query("SELECT new com.mexcorgo.dto.QuatationMasterPricingResponseSqlDto(" +
                 "l.leadId,l.leadReferenceNo,n.source,n.destination,n.commodity,n.size,n.weight," +
-                "n.typeOfTransporatation,q.quatationId,n.movingDateAndTime,n.otherServices," +
+                "n.typeOfTransportation,q.quatationId,n.movingDateAndTime,n.otherServices," +
                 "n.carTransport,n.carMovingDate,n.carMovingTime," +
                 "q.quatationRequiredDate,q.quatationRequiredTime,q.quatationReferenceNo," +
                 "m.masterId,m.associateCode,m.serviceSector,m.companyName,m.contactName,m.contactNumber,m.emailId," +

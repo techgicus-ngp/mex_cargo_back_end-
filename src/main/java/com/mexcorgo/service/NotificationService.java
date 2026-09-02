@@ -131,17 +131,17 @@ public class NotificationService {
                 "<table border='1' cellpadding='5' cellspacing='0'>" +
                 "<tr><th>Lead Reference No</th><td>" + lead.getLeadReferenceNo() + "</td></tr>" +
                 "<tr><th>Client Name</th><td>" + endUserDetails.getUserName() + "</td></tr>" +
-                "<tr><th>Client Department</th><td>" + endUserDetails.getDepartment() + "</td></tr>" +
-                "<tr><th>Client Designation</th><td>" + endUserDetails.getDesignation() + "</td></tr>" +
-                "<tr><th>Client Contact No</th><td>" + endUserDetails.getContactNo() + "</td></tr>" +
-                "<tr><th>Client Landline No</th><td>" + endUserDetails.getLandLineNo() + "</td></tr>" +
-                "<tr><th>Client MailId</th><td>" + endUserDetails.getMailId() + "</td></tr>" +
+               // "<tr><th>Client Department</th><td>" + endUserDetails.getDepartment() + "</td></tr>" +
+               // "<tr><th>Client Designation</th><td>" + endUserDetails.getDesignation() + "</td></tr>" +
+               // "<tr><th>Client Contact No</th><td>" + endUserDetails.getContactNo() + "</td></tr>" +
+                "<tr><th>Client Landline No</th><td>" + endUserDetails.getEndUserContactNo() + "</td></tr>" +
+                "<tr><th>Client MailId</th><td>" + endUserDetails.getEndUserMailId() + "</td></tr>" +
                 "<tr><th>Origin</th><td>" + n.getSource() + "</td></tr>" +
                 "<tr><th>Destination</th><td>" + n.getDestination() + "</td></tr>" +
                 "<tr><th>Commodity</th><td>" + n.getCommodity() + "</td></tr>" +
                 "<tr><th>Size</th><td>" + n.getSize() + "</td></tr>" +
                 "<tr><th>Weight</th><td>" + n.getWeight() + "</td></tr>" +
-                "<tr><th>Transportation Type</th><td>" + n.getTypeOfTransporatation() + "</td></tr>" +
+                "<tr><th>Transportation Type</th><td>" + n.getTypeOfTransportation() + "</td></tr>" +
                 "<tr><th>Moving Date</th><td>" + n.getMovingDateAndTime() + "</td></tr>" +
                 "<tr><th>Other Services</th><td>" + n.getOtherServices() + "</td></tr>" +
                 "<tr><th>Car Name</th><td>" + n.getCarTransport() + "</td></tr>" +
@@ -336,7 +336,7 @@ public class NotificationService {
                 "<tr><td><strong>Commodity</strong></td><td>" + firstEntry.getCommodity() + "</td></tr>" +
                 "<tr><td><strong>Size</strong></td><td>" + firstEntry.getSize() + "</td></tr>" +
                 "<tr><td><strong>Weight</strong></td><td>" + firstEntry.getWeight() + "</td></tr>" +
-                "<tr><td><strong>Transportation Type</strong></td><td>" + firstEntry.getTypeOfTransporatation() + "</td></tr>" +
+                "<tr><td><strong>Transportation Type</strong></td><td>" + firstEntry.getTypeOfTransportation() + "</td></tr>" +
                 "<tr><td><strong>Moving Date And Time</strong></td><td>" + firstEntry.getMovingDateAndTime() + "</td></tr>" +
                 "<tr><td><strong>Other Service</strong></td><td>" + firstEntry.getOtherServices() + "</td></tr>" +
                 "<tr><td><strong>Car Name</strong></td><td>" + firstEntry.getCarTransport() + "</td></tr>" +

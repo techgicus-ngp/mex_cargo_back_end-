@@ -1,14 +1,8 @@
 package com.mexcorgo.dto.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
 public class AdditionalNeedRequest {
     private String articleName;
     private String articleValue;

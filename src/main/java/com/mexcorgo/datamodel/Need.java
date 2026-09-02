@@ -6,10 +6,7 @@ import com.mexcorgo.component.Commodity;
 import com.mexcorgo.component.OtherServices;
 import com.mexcorgo.component.RiskCoverageGood;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,6 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
+@Builder
 @Entity
 public class Need {
 
@@ -63,9 +61,9 @@ public class Need {
 
     private String overAllWeightValue;
 
-    private String typeOfTransporatation;
+    private String typeOfTransportation;
 
-    private String sizeOfTransporatation;
+    private String sizeOfTransportation;
 
     private String preferredRoot;
 
@@ -87,9 +85,9 @@ public class Need {
 
     private String whenWeGetGoods;
 
-    private String anyThingsElseRatherThanGood;
+    private String anyThingElseRatherThanGood;
 
-    private String anyWareHouseFacilityRatherThanThisThings;
+    private String anyWarehouseFacilityRatherThanThisThings;
 
  //   private String insuranceFacilityOfGoods;
 

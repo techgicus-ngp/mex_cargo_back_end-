@@ -19,7 +19,7 @@ public interface QuatationPlanningExecutiveRepository extends JpaRepository<Quat
 
     @Query("SELECT new com.mexcorgo.dto.response.PlanningQuatation(" +
             "l.leadId, l.leadReferenceNo, n.source, n.destination," +
-            "q.quatationId,n.commodity,n.size,n.weight,n.typeOfTransporatation, n.movingDateAndTime,q.quatationRequiredDate, q.quatationRequiredTime," +
+            "q.quatationId,n.commodity,n.size,n.weight,n.typeOfTransportation, n.movingDateAndTime,q.quatationRequiredDate, q.quatationRequiredTime," +
             "q.quatationForwardedDateToPurchaseExecutive AS forwardQuatationDate,"+
             "q.quatationForwardedTimeToPurchaseExecutive AS forwardQuationTime, q.quatationReferenceNo," +
             "n.otherServices,n.carTransport,n.carMovingDate,n.carMovingTime) FROM QuatationPlanningExecutive qpe " +

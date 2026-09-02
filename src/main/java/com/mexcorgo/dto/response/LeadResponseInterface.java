@@ -34,5 +34,7 @@ public interface LeadResponseInterface {
     String getDepartmentName();
     LocalDate getLeadCreatedDate();
     LocalTime getLeadCreatedTime();
+    String getSector();
+    String getSubSector();
 
 }

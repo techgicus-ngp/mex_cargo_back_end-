@@ -39,7 +39,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String,Object>> handleResourceNotFoundException(ResourceNotFoundException resourceNotFoundException){
-        return buildResponse(HttpStatus.UNAUTHORIZED,resourceNotFoundException.getMessage());
+        return buildResponse(HttpStatus.NOT_FOUND,resourceNotFoundException.getMessage());
     }
 
     @ExceptionHandler(CustomException.class)

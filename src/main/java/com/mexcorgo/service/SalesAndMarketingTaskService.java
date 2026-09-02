@@ -115,8 +115,8 @@ public class SalesAndMarketingTaskService {
           ClientDetailsWhichWeTransferToAccountExcutiveDto clientDetails = new ClientDetailsWhichWeTransferToAccountExcutiveDto();
           clientDetails.setLeadReferenceNo(lead.getLeadReferenceNo());
           clientDetails.setUserName(endUserDetails.getUserName());
-          clientDetails.setMailId(endUserDetails.getMailId());
-          clientDetails.setContactNo(endUserDetails.getContactNo());
+          clientDetails.setMailId(endUserDetails.getEndUserMailId());
+          clientDetails.setContactNo(endUserDetails.getEndUserContactNo());
 
           QuatationAccountExecutive quatationAccountExecutive = new QuatationAccountExecutive();
           quatationAccountExecutive.setQuatation(quatation);
